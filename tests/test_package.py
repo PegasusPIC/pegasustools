@@ -1,7 +1,7 @@
 import importlib.metadata
 
-import pegasustools as m
+import pegasustools as pt
 
 
 def test_version():
-    assert importlib.metadata.version("pegasustools") == m.__version__
+    assert importlib.metadata.version("pegasustools") == pt.__version__
