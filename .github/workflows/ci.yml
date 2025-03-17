@@ -18,7 +18,7 @@ env:
 
 jobs:
   pre-commit:
-    name: Format
+    name: Linting
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,7 +34,7 @@ jobs:
         run: pipx run --python 3.13 nox -s pylint -- --output-format=github
 
   checks:
-    name: Check Python ${{ matrix.python-version }} on ${{ matrix.runs-on }}
+    name: "Tests: Python-${{ matrix.python-version }} on ${{ matrix.runs-on }}"
     runs-on: ${{ matrix.runs-on }}
     needs: [pre-commit]
     strategy:
