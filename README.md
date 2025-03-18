@@ -8,6 +8,7 @@
 [![PyPI platforms][pypi-platforms]][pypi-link]
 
 [![GitHub Discussion][github-discussions-badge]][github-discussions-link]
+[![pre-commit.ci status][pre-commit-badge]][pre-commit-link]
 
 <!-- SPHINX-START -->
 
@@ -23,5 +24,7 @@
 [pypi-version]:             https://img.shields.io/pypi/v/pegasustools
 [rtd-badge]:                https://readthedocs.org/projects/pegasustools/badge/?version=latest
 [rtd-link]:                 https://pegasustools.readthedocs.io/en/latest/?badge=latest
+[pre-commit-badge]:         https://results.pre-commit.ci/badge/github/PegasusPIC/pegasustools/main.svg
+[pre-commit-link]:          https://results.pre-commit.ci/latest/github/PegasusPIC/pegasustools/main
 
 <!-- prettier-ignore-end -->

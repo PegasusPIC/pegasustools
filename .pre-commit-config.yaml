@@ -1,5 +1,6 @@
 ci:
   autoupdate_commit_msg: "chore: update pre-commit hooks"
+  autofix_prs: false
   autofix_commit_msg: "style: pre-commit fixes"
 
 exclude: ^.cruft.json|.copier-answers.yml$|.vscode/.*
@@ -47,7 +48,7 @@ repos:
 
   # Run Ruff linter and formatter on all python files, apply and show fixes
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.9.10"
+    rev: "v0.11.0"
     hooks:
       - id: ruff
         args: ["--fix", "--show-fixes"]
@@ -86,7 +87,7 @@ repos:
 
   # Validate pyproject.toml file
   - repo: https://github.com/abravalheri/validate-pyproject
-    rev: "v0.23"
+    rev: "v0.24"
     hooks:
       - id: validate-pyproject
         additional_dependencies: ["validate-pyproject-schema-store[all]"]
