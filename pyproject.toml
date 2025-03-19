@@ -44,6 +44,8 @@ docs = [
   "sphinx_copybutton",
   "sphinx_autodoc_typehints",
   "furo>=2023.08.17",
+  "nbsphinx>=0.9.7",
+  "ipykernel"
 ]
 
 [project.urls]
@@ -138,6 +140,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["T20"]
 "noxfile.py" = ["T20"]
+"docs/**" = ["T20"]
 
 
 [tool.pylint]

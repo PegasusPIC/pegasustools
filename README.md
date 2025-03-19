@@ -28,3 +28,5 @@
 [pre-commit-link]:          https://results.pre-commit.ci/latest/github/PegasusPIC/pegasustools/main
 
 <!-- prettier-ignore-end -->
+
+This is some text in the readme describing PegasusTools
