@@ -14,6 +14,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",
     "sphinx_copybutton",
+    "nbsphinx",
 ]
 
 source_suffix = [".rst", ".md"]
@@ -60,3 +61,12 @@ nitpick_ignore = [
 ]
 
 always_document_param_types = True
+
+nbsphinx_execute = "always"
+
+nbsphinx_execute_arguments = [
+    "--InlineBackend.figure_formats={'png2x'}",
+    "--InlineBackend.rc=figure.dpi=96",
+]
+
+nbsphinx_kernel_name = "python3"
