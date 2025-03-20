@@ -89,6 +89,8 @@ def build_api_docs(session: nox.Session) -> None:
         "--force",
         "--templatedir=./docs/_templates/apidoc",
         "src/pegasustools",
+        "--separate",
+        "--no-heading",
     )
 
 
