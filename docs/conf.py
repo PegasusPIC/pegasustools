@@ -2,6 +2,7 @@ import importlib.metadata
 from typing import Any
 
 project = "pegasustools"
+project_capitals = "PegasusTools"
 copyright = "2025, Robert Caddy"
 author = "Robert Caddy"
 version = release = importlib.metadata.version("pegasustools")
@@ -27,7 +28,12 @@ exclude_patterns = [
     ".venv",
 ]
 
+# Documentation for Furo is [here](https://pradyunsg.me/furo/)
 html_theme = "furo"
+
+html_logo = "pegasus.png"
+
+html_title = f"{project_capitals} {release} Documentation"
 
 html_theme_options: dict[str, Any] = {
     "footer_icons": [
