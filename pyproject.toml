@@ -112,9 +112,22 @@ exclude = ["old_scripts/**"]
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
-  "COM812", # Made redundant by using the linter as well
   "D203", # Formatting rule that conflicts with D211 which is what numpy uses
   "D213", # Formatting rule that conflicts with D212 which is what numpy uses
+  "D415", # Formatting rule that conflicts with the numpy convention
+
+  # Rules that conflict or are made redundant when using formatter
+  "W191",
+  "E111",
+  "E114",
+  "E117",
+  "E501",
+  "D206",
+  "D300",
+  "Q",
+  "COM812",
+  "COM819",
+  "ISC002",
 ]
 
 [tool.ruff.lint.per-file-ignores]
