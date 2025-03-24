@@ -1,9 +1,11 @@
+"""Configuration file for Sphinx."""
+
 import importlib.metadata
 from typing import Any
 
 project = "pegasustools"
 project_capitals = "PegasusTools"
-copyright = "2025, Robert Caddy"
+pegasus_copyright = "2025, Robert Caddy"
 author = "Robert Caddy"
 version = release = importlib.metadata.version("pegasustools")
 

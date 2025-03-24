@@ -9,6 +9,7 @@
 
 [![GitHub Discussion][github-discussions-badge]][github-discussions-link]
 [![pre-commit.ci status][pre-commit-badge]][pre-commit-link]
+[![Code style: Ruff][ruff-badge]][ruff-link]
 
 <!-- SPHINX-START -->
 
@@ -26,6 +27,8 @@
 [rtd-link]:                 https://pegasustools.readthedocs.io/en/latest/?badge=latest
 [pre-commit-badge]:         https://results.pre-commit.ci/badge/github/PegasusPIC/pegasustools/main.svg
 [pre-commit-link]:          https://results.pre-commit.ci/latest/github/PegasusPIC/pegasustools/main
+[ruff-badge]:               https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
+[ruff-link]:                https://github.com/astral-sh/ruff
 
 <!-- prettier-ignore-end -->
 
@@ -33,4 +36,4 @@ This is some text in the readme describing PegasusTools
 
 ## Citations
 
-- Icon made by max.icons from [www.flaticon.com](www.flaticon.com])
+- Icon made by max.icons from [www.flaticon.com](https://www.flaticon.com)
