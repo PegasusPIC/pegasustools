@@ -2,7 +2,7 @@ import pegasustools.file1 as pt_1
 
 
 def times_6(x: int) -> int:
-    """Multiply input integer by 6
+    """Multiply input integer by 6.
 
     Parameters
     ----------

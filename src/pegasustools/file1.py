@@ -1,5 +1,5 @@
 def times_2(x: int) -> int:
-    """Multiply input integer by 2
+    """Multiply input integer by 2.
 
     Parameters
     ----------
