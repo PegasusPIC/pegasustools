@@ -13,5 +13,6 @@ def times_6(x: int) -> int:
     -------
     int
         6*x
+
     """
     return 3 * pt_1.times_2(x)

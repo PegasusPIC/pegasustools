@@ -10,5 +10,6 @@ def times_2(x: int) -> int:
     -------
     int
         2*x
+
     """
     return 2 * x
