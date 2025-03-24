@@ -36,4 +36,4 @@ This is some text in the readme describing PegasusTools
 
 ## Citations
 
-- Icon made by max.icons from [www.flaticon.com](www.flaticon.com])
+- Icon made by max.icons from [www.flaticon.com](https://www.flaticon.com)
