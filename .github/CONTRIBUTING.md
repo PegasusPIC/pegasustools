@@ -6,11 +6,13 @@ description of best practices for developing scientific packages.
 # Quick development
 
 The fastest way to start with development is to use nox. If you don't have nox,
-you can use `pipx run nox` to run it without installing, or `pipx install nox`.
-If you don't have pipx (pip for applications), then you can install with
-`pip install pipx` (the only case were installing an application with regular
-pip is reasonable). If you use macOS, then pipx and nox are both in brew, use
-`brew install pipx nox`.
+you can use `uvx nox` (or `pipx run nox`) to run it without installing, or
+`uvx install nox` (or `pipx install nox`). If you don't have uv or pipx (pip for
+applications), then you can install uv with
+[this guide](https://docs.astral.sh/uv/getting-started/installation/) and pipx
+by running `pip install pipx` (the only case were installing an application with
+regular pip is reasonable). If you use macOS, then pipx and nox are both in
+brew, use `brew install pipx nox`.
 
 To use, run `nox`. This will lint and test using every installed version of
 Python on your system, skipping ones that are not installed. You can also run
