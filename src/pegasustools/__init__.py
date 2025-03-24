@@ -1,5 +1,4 @@
-"""
-Copyright (c) 2025 Robert Caddy. All rights reserved.
+"""Copyright (c) 2025 Robert Caddy. All rights reserved.
 
 pegasustools: Analysis package for the Pegasus PIC code.
 """
