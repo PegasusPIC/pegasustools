@@ -1,10 +1,9 @@
-# pegasustools
+# PegasusTools
 
 [![Actions Status][actions-badge]][actions-link]
 [![Documentation Status][rtd-badge]][rtd-link]
 
 [![PyPI version][pypi-version]][pypi-link]
-[![Conda-Forge][conda-badge]][conda-link]
 [![PyPI platforms][pypi-platforms]][pypi-link]
 
 [![GitHub Discussion][github-discussions-badge]][github-discussions-link]
@@ -16,8 +15,6 @@
 <!-- prettier-ignore-start -->
 [actions-badge]:            https://github.com/PegasusPIC/pegasustools/workflows/CI/badge.svg
 [actions-link]:             https://github.com/PegasusPIC/pegasustools/actions
-[conda-badge]:              https://img.shields.io/conda/vn/conda-forge/pegasustools
-[conda-link]:               https://github.com/conda-forge/pegasustools-feedstock
 [github-discussions-badge]: https://img.shields.io/static/v1?label=Discussions&message=Ask&color=blue&logo=github
 [github-discussions-link]:  https://github.com/PegasusPIC/pegasustools/discussions
 [pypi-link]:                https://pypi.org/project/pegasustools/
@@ -32,8 +29,28 @@
 
 <!-- prettier-ignore-end -->
 
-This is some text in the readme describing PegasusTools
+## Summary
+
+PegasusTools is an analysis package for the Pegasus++ Particle-In-Cell (PIC)
+code. It can be easily installed with `pip install pegasustools` or
+`uv pip install pegasustools`. The documentation for the latest stable version
+can be found [here](https://pegasustools.readthedocs.io/en/stable/). Once
+installed it can be imported directly into any Python program via
+`import pegasustools as pt`
+
+## Found a Bug or Have a Feature Request?
+
+Please open an issue and we'll figure out a solution.
+
+## Contributing
+
+If you wish to contribute please review the contribution guide in
+[CONTRIBUTING.md](./.github/CONTRIBUTING.md). All contributions need to come via
+pull requests. I recommend you fork this repo, make your changes, then submit a
+PR from your feature branch.
 
 ## Citations
 
+- [M. W. Kunz, J. M. Stone, X.-N. Bai, 2014, JCoP, 259, 154 \
+  _Pegasus: A new hybrid-kinetic particle-in-cell code for astrophysical plasma dynamics_](https://ui.adsabs.harvard.edu/abs/2014JCoPh.259..154K/abstract)
 - Icon made by max.icons from [www.flaticon.com](https://www.flaticon.com)
