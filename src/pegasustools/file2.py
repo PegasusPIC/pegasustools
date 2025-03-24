@@ -1,3 +1,9 @@
+"""Provides a simple function for testing.
+
+This module provides:
+- times_6: multiply input by 6
+"""
+
 import pegasustools.file1 as pt_1
 
 

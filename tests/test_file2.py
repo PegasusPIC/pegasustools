@@ -1,3 +1,5 @@
+"""Test the contents of the file_2 module."""
+
 import pegasustools as pt
 
 

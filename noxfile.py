@@ -1,3 +1,5 @@
+"""Noxfile to define sessions that the Nox task runner can execute."""
+
 import argparse
 import shutil
 from pathlib import Path

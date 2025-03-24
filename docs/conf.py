@@ -1,3 +1,5 @@
+"""Configuration file for Sphinx."""
+
 import importlib.metadata
 from typing import Any
 

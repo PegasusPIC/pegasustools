@@ -1,3 +1,5 @@
+"""Tests meta information about the package."""
+
 import importlib.metadata
 
 import pegasustools as pt
