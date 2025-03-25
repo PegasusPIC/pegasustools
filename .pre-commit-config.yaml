@@ -99,3 +99,9 @@ repos:
       - id: check-dependabot # Validate dependabot file
       - id: check-github-workflows # Validate GitHub Workflows files
       - id: check-readthedocs # Validate Read The Docs files
+
+  # Strip output from notebooks
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.8.1
+    hooks:
+      - id: nbstripout
