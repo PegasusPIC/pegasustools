@@ -109,6 +109,9 @@ disallow_incomplete_defs = true
 [tool.ruff]
 exclude = ["old_scripts/**"]
 
+[tool.ruff.format]
+docstring-code-format = true
+
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
