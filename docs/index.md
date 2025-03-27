@@ -3,10 +3,9 @@
 ```{toctree}
 :maxdepth: 2
 :hidden:
-:caption: API
+:caption: Documentation
 
-another_doc_file.md
-notebook_docs.ipynb
+reading_pegasus_files.ipynb
 api/pegasustools
 ```
 

@@ -27,7 +27,10 @@ classifiers = [
   "Typing :: Typed",
 ]
 dynamic = ["version"]
-dependencies = []
+dependencies = [
+    "numpy>=2.2",
+    "matplotlib>=3.10",
+]
 
 [project.optional-dependencies]
 test = [
@@ -72,7 +75,7 @@ dev-dependencies = [
 
 [tool.pytest.ini_options]
 minversion = "8.0"
-addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
+addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config", "--cov=pegasustools", "--cov-branch", "--cov-report=term-missing"]
 xfail_strict = true
 filterwarnings = [
   "error",
@@ -117,6 +120,7 @@ select = ["ALL"]
 ignore = [
   "D203", # Formatting rule that conflicts with D211 which is what numpy uses
   "D213", # Formatting rule that conflicts with D212 which is what numpy uses
+  "D413", # Formatting rule that conflicts with the numpy convention
   "D415", # Formatting rule that conflicts with the numpy convention
 
   # Rules that conflict or are made redundant when using formatter
@@ -134,10 +138,12 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["T20", "S101", "INP001"]
+"tests/**" = ["T20", "S101", "INP001", "SLF001"]
 "noxfile.py" = ["T20"]
 "docs/**" = ["T20", "INP001"]
 
+[tool.ruff.lint.pylint]
+max-args = 10
 
 [tool.pylint]
 py-version = "3.13"
