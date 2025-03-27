@@ -18,11 +18,11 @@ class PegasusNBFData:
 
     def __init__(  # noqa: PLR0913
         self,
-        time: np.float64,
+        time: np.float32,
         num_meshblocks: int,
         num_variables: int,
         list_of_variables: list[str],
-        mesh_params: dict[str, np.float64 | int],
+        mesh_params: dict[str, np.float32 | int],
         meshblock_params: dict[str, int],
         *,
         big_endian: bool,
@@ -31,7 +31,7 @@ class PegasusNBFData:
 
         Parameters
         ----------
-        time : np.float64
+        time : np.float32
             The simulation time in the file.
         big_endian : bool
             True if the data is big endian, False otherwise.
@@ -41,7 +41,7 @@ class PegasusNBFData:
             The number of variables/fields in the NBF file.
         list_of_variables : list[str]
             The list of variables in the NBF files.
-        mesh_params : dict[str, np.float64  |  int]
+        mesh_params : dict[str, np.float32  |  int]
             The mesh parameters.
         meshblock_params : dict[str, int]
             The mesh block parameters.
@@ -55,22 +55,22 @@ class PegasusNBFData:
         self.__meshblock_params = meshblock_params
 
     # Define the header variables
-    __time: np.float64
+    __time: np.float32
     __big_endian: bool
     __num_meshblocks: int
     __num_variables: int
     __list_of_variables: list[str]
-    __mesh_params: dict[str, np.float64 | int]
+    __mesh_params: dict[str, np.float32 | int]
     __meshblock_params: dict[str, int]
 
     # Define getters for header variables
     @property
-    def time(self) -> np.float64:
+    def time(self) -> np.float32:
         """Get the simulation time of the NBF file.
 
         Returns
         -------
-        np.float64
+        np.float32
             The time in the NBF file
         """
         return self.__time
@@ -120,12 +120,12 @@ class PegasusNBFData:
         return self.__list_of_variables
 
     @property
-    def mesh_params(self) -> dict[str, np.float64 | int]:
+    def mesh_params(self) -> dict[str, np.float32 | int]:
         """Get the mesh parameters in the NBF file.
 
         Returns
         -------
-        dict[str, np.float64 | int]
+        dict[str, np.float32 | int]
             The mesh parameters in the NBF file.
         """
         return self.__mesh_params
@@ -142,7 +142,7 @@ class PegasusNBFData:
         return self.__meshblock_params
 
     # The dictionary that actually stores the data
-    data: dict[str, np.typing.NDArray[np.float64]]
+    data: dict[str, np.typing.NDArray[np.float32]]
 
 
 def _load_nbf_header(nbf_file: BinaryIO) -> PegasusNBFData:
@@ -162,7 +162,7 @@ def _load_nbf_header(nbf_file: BinaryIO) -> PegasusNBFData:
     # Now let's parse the header
 
     # Line 0: The time of the output
-    time = np.float64(header_list[0].split()[-1])
+    time = np.float32(header_list[0].split()[-1])
 
     # Line 1: Endianness
     big_endian = bool(int(header_list[1].split()[-1]))
@@ -180,13 +180,13 @@ def _load_nbf_header(nbf_file: BinaryIO) -> PegasusNBFData:
     # Combine all three lines, split at whitespace, and discard the "Mesh:" part of the line
     combined_lines = (header_list[5] + header_list[6] + header_list[7]).split()[1:]
     # Loop through elements to build a dictionary with values and keys
-    mesh_params: dict[str, np.float64 | int] = {}
+    mesh_params: dict[str, np.float32 | int] = {}
     for element in combined_lines:
         key, value = element.split("=")
         if key[:2] == "nx":
             mesh_params[key] = int(value)
         elif key[0] == "x":
-            mesh_params[key] = np.float64(value)
+            mesh_params[key] = np.float32(value)
 
     # Line 8: Get the meshblock variables
     meshblock_params: dict[str, int] = {}
