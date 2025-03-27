@@ -117,6 +117,7 @@ select = ["ALL"]
 ignore = [
   "D203", # Formatting rule that conflicts with D211 which is what numpy uses
   "D213", # Formatting rule that conflicts with D212 which is what numpy uses
+  "D413", # Formatting rule that conflicts with the numpy convention
   "D415", # Formatting rule that conflicts with the numpy convention
 
   # Rules that conflict or are made redundant when using formatter
