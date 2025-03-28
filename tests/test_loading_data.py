@@ -29,4 +29,4 @@ def test__load_nbf() -> None:
         assert fid_field.shape == test_field.shape
 
         # check that all elements are correct
-        np.testing.assert_array_max_ulp(fid_field, test_field, maxulp=1)
+        np.testing.assert_array_max_ulp(fid_field, test_field, maxulp=0)
