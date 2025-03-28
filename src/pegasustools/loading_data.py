@@ -227,39 +227,44 @@ def _load_nbf(filepath: Path) -> PegasusNBFData:
         # - Can I skip reading each meshblock header??? Probably not
         # - If execution time isn't down to <100ms then try asyncio https://stackoverflow.com/a/59385935
 
-        # starting indices for each logical location
-        islist = np.arange(
-            0, nbf_data.mesh_params["nx1"], nbf_data.meshblock_params["nx1"]
-        )
-        jslist = np.arange(
-            0, nbf_data.mesh_params["nx2"], nbf_data.meshblock_params["nx2"]
-        )
-        kslist = np.arange(
-            0, nbf_data.mesh_params["nx3"], nbf_data.meshblock_params["nx3"]
-        )
-
         # loop over all meshblocks and read all variables
         element_width = 4  # number of bytes per element
         header_size = 12  # number of elements in the header in each meshblock
         for nb in range(nbf_data.num_meshblocks):
-            # Load the meshblock header discarding values we don't need
-            il1, il2, il3, mx1, _, _, mx2, _, _, mx3, _, _ = struct.unpack(
-                "@4i2fi2fi2f", nbf_file.read(element_width * header_size)
-            )
+            # Load the meshblock header, discarding values we don't need
+            (
+                x1_block_coord,
+                x2_block_coord,
+                x3_block_coord,
+                x1_block_size,
+                _,
+                _,
+                x2_block_size,
+                _,
+                _,
+                x3_block_size,
+                _,
+                _,
+            ) = struct.unpack("@4i2fi2fi2f", nbf_file.read(element_width * header_size))
 
-            iis = islist[il1]
-            iie = iis + mx1
-            ijs = jslist[il2]
-            ije = ijs + mx2
-            iks = kslist[il3]
-            ike = iks + mx3
-            fmt = "@%df" % (mx1 * mx2 * mx3)
+            # Compute the indices to write to
+            i_start = x1_block_coord * nbf_data.meshblock_params["nx1"]
+            i_end = i_start + x1_block_size
+            j_start = x2_block_coord * nbf_data.meshblock_params["nx2"]
+            j_end = j_start + x2_block_size
+            k_start = x3_block_coord * nbf_data.meshblock_params["nx3"]
+            k_end = k_start + x3_block_size
+
+            block_size = x1_block_size * x2_block_size * x3_block_size
+            fmt = "@%df" % block_size
+
             for nv in range(nbf_data.num_variables):
                 tmp = nbf_data.data[nbf_data.list_of_variables[nv]]
-                data = struct.unpack(fmt, nbf_file.read(4 * mx1 * mx2 * mx3))
+                data = struct.unpack(fmt, nbf_file.read(4 * block_size))
                 data = np.array(data)
-                data = data.reshape(mx3, mx2, mx1)
-                tmp[iks:ike, ijs:ije, iis:iie] = data
+                data = data.reshape(x3_block_size, x2_block_size, x1_block_size)
+
+                tmp[k_start:k_end, j_start:j_end, i_start:i_end] = data
 
     # Swap axis so the data is formatted as (Nx1, Nx2, Nx3)
     for key in nbf_data.data:
