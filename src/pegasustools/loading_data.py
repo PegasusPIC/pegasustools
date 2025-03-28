@@ -4,6 +4,7 @@ This module provides:
 - FUNCTION/CLASS NAME: DESCRIPTION
 """
 
+import struct
 from pathlib import Path
 from typing import BinaryIO
 
@@ -225,6 +226,45 @@ def _load_nbf(filepath: Path) -> PegasusNBFData:
         # - Try loading each variable one at a time
         # - Can I skip reading each meshblock header??? Probably not
         # - If execution time isn't down to <100ms then try asyncio https://stackoverflow.com/a/59385935
+
+        # starting indices for each logical location
+        islist = np.arange(
+            0, nbf_data.mesh_params["nx1"], nbf_data.meshblock_params["nx1"]
+        )
+        jslist = np.arange(
+            0, nbf_data.mesh_params["nx2"], nbf_data.meshblock_params["nx2"]
+        )
+        kslist = np.arange(
+            0, nbf_data.mesh_params["nx3"], nbf_data.meshblock_params["nx3"]
+        )
+
+        # loop over all meshblocks and read all variables
+        for nb in range(nbf_data.num_meshblocks):
+            il1 = struct.unpack("@i", nbf_file.read(4))[0]
+            il2 = struct.unpack("@i", nbf_file.read(4))[0]
+            il3 = struct.unpack("@i", nbf_file.read(4))[0]
+            mx1 = struct.unpack("@i", nbf_file.read(4))[0]
+            minx1 = struct.unpack("@f", nbf_file.read(4))[0]
+            maxx1 = struct.unpack("@f", nbf_file.read(4))[0]
+            mx2 = struct.unpack("@i", nbf_file.read(4))[0]
+            minx2 = struct.unpack("@f", nbf_file.read(4))[0]
+            maxx2 = struct.unpack("@f", nbf_file.read(4))[0]
+            mx3 = struct.unpack("@i", nbf_file.read(4))[0]
+            minx3 = struct.unpack("@f", nbf_file.read(4))[0]
+            maxx3 = struct.unpack("@f", nbf_file.read(4))[0]
+            iis = islist[il1]
+            iie = iis + mx1
+            ijs = jslist[il2]
+            ije = ijs + mx2
+            iks = kslist[il3]
+            ike = iks + mx3
+            fmt = "@%df" % (mx1 * mx2 * mx3)
+            for nv in range(nbf_data.num_variables):
+                tmp = nbf_data.data[nbf_data.list_of_variables[nv]]
+                data = struct.unpack(fmt, nbf_file.read(4 * mx1 * mx2 * mx3))
+                data = np.array(data)
+                data = data.reshape(mx3, mx2, mx1)
+                tmp[iks:ike, ijs:ije, iis:iie] = data
 
     # Swap axis so the data is formatted as (Nx1, Nx2, Nx3)
     for key in nbf_data.data:
