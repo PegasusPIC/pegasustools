@@ -208,6 +208,48 @@ def _load_nbf_header(nbf_file: BinaryIO) -> PegasusNBFData:
     )
 
 
+def _load_nbf_meshblock(
+    nbf_file: BinaryIO,
+    starting_offset: int,
+    meshblock_header_size: int,
+    nbf_data: PegasusNBFData,
+) -> None:
+    nbf_file.seek(starting_offset)
+    # Load the meshblock header, discarding values we don't need
+    (
+        x1_block_coord,
+        x2_block_coord,
+        x3_block_coord,
+        x1_block_size,
+        _,
+        _,
+        x2_block_size,
+        _,
+        _,
+        x3_block_size,
+        _,
+        _,
+    ) = struct.unpack("@4i2fi2fi2f", nbf_file.read(meshblock_header_size))
+
+    # Compute the indices to write to
+    i_start = x1_block_coord * nbf_data.meshblock_params["nx1"]
+    i_end = i_start + x1_block_size
+    j_start = x2_block_coord * nbf_data.meshblock_params["nx2"]
+    j_end = j_start + x2_block_size
+    k_start = x3_block_coord * nbf_data.meshblock_params["nx3"]
+    k_end = k_start + x3_block_size
+
+    block_size = x1_block_size * x2_block_size * x3_block_size
+
+    for nv in range(nbf_data.num_variables):
+        data = np.fromfile(nbf_file, dtype=np.float32, count=block_size, offset=0)
+        data = data.reshape(x3_block_size, x2_block_size, x1_block_size)
+
+        field_key = nbf_data.list_of_variables[nv]
+
+        nbf_data.data[field_key][k_start:k_end, j_start:j_end, i_start:i_end] = data
+
+
 def _load_nbf(filepath: Path) -> PegasusNBFData:
     # Open the file
     with filepath.open(mode="rb") as nbf_file:
@@ -227,47 +269,36 @@ def _load_nbf(filepath: Path) -> PegasusNBFData:
         # - Can I skip reading each meshblock header??? Probably not
         # - If execution time isn't down to <100ms then try asyncio https://stackoverflow.com/a/59385935
 
+        # Compute the required byte offsets and sizes needed to make each iteration independent
+
+        # The size of the file header
+        header_size = nbf_file.tell()
+        # number of bytes per element
+        element_width = 4
+        # number of elements in the header in each meshblock
+        meshblock_header_num_elements = 12
+        # The size of the mesheblock header in bytes
+        meshblock_header_size = element_width * meshblock_header_num_elements
+        # The size of the entire meshblock in bytes
+        meshblock_size = (
+            meshblock_header_size
+            + nbf_data.num_variables
+            * element_width
+            * (
+                nbf_data.meshblock_params["nx1"]
+                * nbf_data.meshblock_params["nx2"]
+                * nbf_data.meshblock_params["nx3"]
+            )
+        )
+
         # loop over all meshblocks and read all variables
-        element_width = 4  # number of bytes per element
-        header_size = 12  # number of elements in the header in each meshblock
         for nb in range(nbf_data.num_meshblocks):
-            # Load the meshblock header, discarding values we don't need
-            (
-                x1_block_coord,
-                x2_block_coord,
-                x3_block_coord,
-                x1_block_size,
-                _,
-                _,
-                x2_block_size,
-                _,
-                _,
-                x3_block_size,
-                _,
-                _,
-            ) = struct.unpack("@4i2fi2fi2f", nbf_file.read(element_width * header_size))
-
-            # Compute the indices to write to
-            i_start = x1_block_coord * nbf_data.meshblock_params["nx1"]
-            i_end = i_start + x1_block_size
-            j_start = x2_block_coord * nbf_data.meshblock_params["nx2"]
-            j_end = j_start + x2_block_size
-            k_start = x3_block_coord * nbf_data.meshblock_params["nx3"]
-            k_end = k_start + x3_block_size
-
-            block_size = x1_block_size * x2_block_size * x3_block_size
-
-            for nv in range(nbf_data.num_variables):
-                data = np.fromfile(
-                    nbf_file, dtype=np.float32, count=block_size, offset=0
-                )
-                data = data.reshape(x3_block_size, x2_block_size, x1_block_size)
-
-                field_key = nbf_data.list_of_variables[nv]
-
-                nbf_data.data[field_key][
-                    k_start:k_end, j_start:j_end, i_start:i_end
-                ] = data
+            _load_nbf_meshblock(
+                nbf_file,
+                nb * meshblock_size + header_size,
+                meshblock_header_size,
+                nbf_data,
+            )
 
     # Swap axis so the data is formatted as (Nx1, Nx2, Nx3)
     for key in nbf_data.data:
