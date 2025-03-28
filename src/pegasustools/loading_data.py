@@ -239,19 +239,14 @@ def _load_nbf(filepath: Path) -> PegasusNBFData:
         )
 
         # loop over all meshblocks and read all variables
+        element_width = 4  # number of bytes per element
+        header_size = 12  # number of elements in the header in each meshblock
         for nb in range(nbf_data.num_meshblocks):
-            il1 = struct.unpack("@i", nbf_file.read(4))[0]
-            il2 = struct.unpack("@i", nbf_file.read(4))[0]
-            il3 = struct.unpack("@i", nbf_file.read(4))[0]
-            mx1 = struct.unpack("@i", nbf_file.read(4))[0]
-            minx1 = struct.unpack("@f", nbf_file.read(4))[0]
-            maxx1 = struct.unpack("@f", nbf_file.read(4))[0]
-            mx2 = struct.unpack("@i", nbf_file.read(4))[0]
-            minx2 = struct.unpack("@f", nbf_file.read(4))[0]
-            maxx2 = struct.unpack("@f", nbf_file.read(4))[0]
-            mx3 = struct.unpack("@i", nbf_file.read(4))[0]
-            minx3 = struct.unpack("@f", nbf_file.read(4))[0]
-            maxx3 = struct.unpack("@f", nbf_file.read(4))[0]
+            # Load the meshblock header discarding values we don't need
+            il1, il2, il3, mx1, _, _, mx2, _, _, mx3, _, _ = struct.unpack(
+                "@4i2fi2fi2f", nbf_file.read(element_width * header_size)
+            )
+
             iis = islist[il1]
             iie = iis + mx1
             ijs = jslist[il2]
