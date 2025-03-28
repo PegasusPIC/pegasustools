@@ -241,13 +241,19 @@ def _load_nbf_meshblock(
 
     block_size = x1_block_size * x2_block_size * x3_block_size
 
-    for nv in range(nbf_data.num_variables):
-        data = np.fromfile(nbf_file, dtype=np.float32, count=block_size, offset=0)
-        data = data.reshape(x3_block_size, x2_block_size, x1_block_size)
+    data = np.fromfile(
+        nbf_file, dtype=np.float32, count=block_size * nbf_data.num_variables, offset=0
+    )
+    data = data.reshape(
+        nbf_data.num_variables, x3_block_size, x2_block_size, x1_block_size
+    )
 
+    for nv in range(nbf_data.num_variables):
         field_key = nbf_data.list_of_variables[nv]
 
-        nbf_data.data[field_key][k_start:k_end, j_start:j_end, i_start:i_end] = data
+        nbf_data.data[field_key][k_start:k_end, j_start:j_end, i_start:i_end] = data[
+            nv, :, :, :
+        ]
 
 
 def _load_nbf(filepath: Path) -> PegasusNBFData:
