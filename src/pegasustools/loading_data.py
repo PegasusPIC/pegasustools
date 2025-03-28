@@ -256,15 +256,18 @@ def _load_nbf(filepath: Path) -> PegasusNBFData:
             k_end = k_start + x3_block_size
 
             block_size = x1_block_size * x2_block_size * x3_block_size
-            fmt = "@%df" % block_size
 
             for nv in range(nbf_data.num_variables):
-                tmp = nbf_data.data[nbf_data.list_of_variables[nv]]
-                data = struct.unpack(fmt, nbf_file.read(4 * block_size))
-                data = np.array(data)
+                data = np.fromfile(
+                    nbf_file, dtype=np.float32, count=block_size, offset=0
+                )
                 data = data.reshape(x3_block_size, x2_block_size, x1_block_size)
 
-                tmp[k_start:k_end, j_start:j_end, i_start:i_end] = data
+                field_key = nbf_data.list_of_variables[nv]
+
+                nbf_data.data[field_key][
+                    k_start:k_end, j_start:j_end, i_start:i_end
+                ] = data
 
     # Swap axis so the data is formatted as (Nx1, Nx2, Nx3)
     for key in nbf_data.data:
