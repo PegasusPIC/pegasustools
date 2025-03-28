@@ -59,10 +59,10 @@ class PegasusNBFData:
         self.data: dict[str, np.typing.NDArray[np.float32]] = {}
 
         # Setup nbf_data.data member
-        data_shape: tuple[int] = (
-            self.mesh_params["nx3"],
-            self.mesh_params["nx2"],
-            self.mesh_params["nx1"],
+        data_shape: tuple[int, int, int] = (
+            int(self.mesh_params["nx3"]),
+            int(self.mesh_params["nx2"]),
+            int(self.mesh_params["nx1"]),
         )
         for key in self.list_of_variables:
             self.data[key] = np.empty(data_shape, dtype=np.float32)
