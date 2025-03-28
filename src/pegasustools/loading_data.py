@@ -11,7 +11,7 @@ from typing import BinaryIO
 import numpy as np
 
 
-class PegasusNBFData:
+class _PegasusNBFData:
     """Holds all the data loaded when loading a NBF file.
 
     It stores all the header data into private variables that are accessible via getters and stores the data arrays in a dictionary named `data` which is indexed via the variable field names in the NBF fil.
@@ -59,7 +59,7 @@ class PegasusNBFData:
         # The dictionary that actually stores the data
         self.data: dict[str, np.typing.NDArray[np.float32]] = {}
 
-        # Setup nbf_data.data member
+        # Setup nbf_data.data member. Note that by the end of the reading these axis will be swapped to x1, x2, x3
         data_shape: tuple[int, int, int] = (
             int(self.mesh_params["nx3"]),
             int(self.mesh_params["nx2"]),
@@ -147,7 +147,7 @@ class PegasusNBFData:
         return self.__meshblock_params
 
 
-def _load_nbf_header(nbf_file: BinaryIO) -> PegasusNBFData:
+def _load_nbf_header(nbf_file: BinaryIO) -> _PegasusNBFData:
     # Load the header lines and verify it's an NBF file
     bad_file_message = f"{nbf_file.name} is not a Pegasus++ NBF file."
     try:
@@ -197,7 +197,7 @@ def _load_nbf_header(nbf_file: BinaryIO) -> PegasusNBFData:
         meshblock_params[key] = int(value)
 
     # Build the PegasusNBFData object to return the header info
-    return PegasusNBFData(
+    return _PegasusNBFData(
         time=time,
         big_endian=big_endian,
         num_meshblocks=num_meshblocks,
@@ -212,7 +212,7 @@ def _load_nbf_meshblock(
     nbf_file: BinaryIO,
     starting_offset: int,
     meshblock_header_size: int,
-    nbf_data: PegasusNBFData,
+    nbf_data: _PegasusNBFData,
 ) -> None:
     nbf_file.seek(starting_offset)
     # Load the meshblock header, discarding values we don't need
@@ -256,7 +256,7 @@ def _load_nbf_meshblock(
         ]
 
 
-def _load_nbf(filepath: Path) -> PegasusNBFData:
+def _load_nbf(filepath: Path) -> _PegasusNBFData:
     # Open the file
     with filepath.open(mode="rb") as nbf_file:
         # Read the header
@@ -307,6 +307,7 @@ def _load_nbf(filepath: Path) -> PegasusNBFData:
             )
 
     # Swap axis so the data is formatted as (Nx1, Nx2, Nx3)
+    # Moving this into _load_nbf_meshblock causes a 30% slowdown
     for key in nbf_data.data:
         nbf_data.data[key] = np.swapaxes(nbf_data.data[key], 0, 2)
 
