@@ -46,22 +46,26 @@ class PegasusNBFData:
         meshblock_params : dict[str, int]
             The mesh block parameters.
         """
-        self.__time = time
-        self.__big_endian = big_endian
-        self.__num_meshblocks = num_meshblocks
-        self.__num_variables = num_variables
-        self.__list_of_variables = list_of_variables
-        self.__mesh_params = mesh_params
-        self.__meshblock_params = meshblock_params
+        # Header variables
+        self.__time: np.float32 = time
+        self.__big_endian: bool = big_endian
+        self.__num_meshblocks: int = num_meshblocks
+        self.__num_variables: int = num_variables
+        self.__list_of_variables: list[str] = list_of_variables
+        self.__mesh_params: dict[str, np.float32 | int] = mesh_params
+        self.__meshblock_params: dict[str, int] = meshblock_params
 
-    # Define the header variables
-    __time: np.float32
-    __big_endian: bool
-    __num_meshblocks: int
-    __num_variables: int
-    __list_of_variables: list[str]
-    __mesh_params: dict[str, np.float32 | int]
-    __meshblock_params: dict[str, int]
+        # The dictionary that actually stores the data
+        self.data: dict[str, np.typing.NDArray[np.float32]] = {}
+
+        # Setup nbf_data.data member
+        data_shape: tuple[int] = (
+            self.mesh_params["nx3"],
+            self.mesh_params["nx2"],
+            self.mesh_params["nx1"],
+        )
+        for key in self.list_of_variables:
+            self.data[key] = np.empty(data_shape, dtype=np.float32)
 
     # Define getters for header variables
     @property
@@ -140,9 +144,6 @@ class PegasusNBFData:
             The mesh block parameters in the NBF file.
         """
         return self.__meshblock_params
-
-    # The dictionary that actually stores the data
-    data: dict[str, np.typing.NDArray[np.float32]]
 
 
 def _load_nbf_header(nbf_file: BinaryIO) -> PegasusNBFData:
@@ -224,4 +225,9 @@ def _load_nbf(filepath: Path) -> PegasusNBFData:
         # - Try loading each variable one at a time
         # - Can I skip reading each meshblock header??? Probably not
         # - If execution time isn't down to <100ms then try asyncio https://stackoverflow.com/a/59385935
-        return nbf_data  # noqa: RET504
+
+    # Swap axis so the data is formatted as (Nx1, Nx2, Nx3)
+    for key in nbf_data.data:
+        nbf_data.data[key] = np.swapaxes(nbf_data.data[key], 0, 2)
+
+    return nbf_data
