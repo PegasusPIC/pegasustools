@@ -298,10 +298,10 @@ def _load_nbf(filepath: Path) -> _PegasusNBFData:
         )
 
         # loop over all meshblocks and read all variables
-        for nb in range(nbf_data.num_meshblocks):
+        for meshblock_id in range(nbf_data.num_meshblocks):
             _load_nbf_meshblock(
                 nbf_file,
-                nb * meshblock_size + header_size,
+                meshblock_id * meshblock_size + header_size,
                 meshblock_header_size,
                 nbf_data,
             )
