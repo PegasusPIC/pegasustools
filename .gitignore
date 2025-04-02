@@ -1,3 +1,10 @@
+# Files specific for this repo
+*.nbf
+*.track.dat
+*.spec
+testing_notebook.ipynb
+tests/data/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
