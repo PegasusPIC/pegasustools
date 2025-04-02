@@ -1,4 +1,4 @@
-"""Provides the utilities required to load output files from Pegasus++.
+"""Provides the utilities required to load NBF files from Pegasus++.
 
 This module provides:
 - PegasusNBFData: A class for holding the data loaded from a NBF file
@@ -260,19 +260,6 @@ def _load_nbf(filepath: Path) -> PegasusNBFData:
     with filepath.open(mode="rb") as nbf_file:
         # Read the header
         nbf_data = _load_nbf_header(nbf_file)
-
-        # META: Read the binary part of the file
-        # Steps:
-        # 0. Create target arrays
-        # 1. Compute step between meshblocks so all iterations are independent, allowing for parallelization
-        # 2. Loop through mesh blocks
-        #   3. Load the mesh block header
-        #   4. Load the entire data in one go with np.fromfile
-        #   5. Reshape data
-        #   6. Copy data into target arrays
-        # - Try loading each variable one at a time
-        # - Can I skip reading each meshblock header??? Probably not
-        # - If execution time isn't down to <100ms then try asyncio https://stackoverflow.com/a/59385935
 
         # Compute the required byte offsets and sizes needed to make each iteration independent
 
