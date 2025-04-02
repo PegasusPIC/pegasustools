@@ -2,7 +2,7 @@
 *.nbf
 *.track.dat
 *.spec
-testing_notebook.ipynb
+experiments.ipynb
 tests/data/*
 
 # Byte-compiled / optimized / DLL files
