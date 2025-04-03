@@ -47,18 +47,16 @@ class PegasusSpectralData:
         size : int
             The size of the spectra, by default 80000
         """
-        # Header variable
-        self.__time: np.float64 = np.nan
-
         # Open the file
         with file_path.open(mode="rb") as spec_file:
-            # Read the header
-            nproc = 5376
+            # Load header variable
+            header = spec_file.readline().decode('ascii')
+            self.__time: np.float64 = np.float64(header.split()[-1])
 
             # The np.array that actually stores the data
+            nproc = 5376
             self.data = np.empty((nproc, 80000))
 
-            spec_file.readline()
             for ii in range(nproc):
                 struct.unpack("@d", spec_file.read(8))[0]
                 struct.unpack("@d", spec_file.read(8))[0]
