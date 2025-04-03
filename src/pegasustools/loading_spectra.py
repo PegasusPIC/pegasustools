@@ -38,15 +38,15 @@ class PegasusSpectralData:
     spectra data in a numpy array named `data`
     """
 
-    def __init__(self, file_path: Path, size: int = 80000) -> None:
+    def __init__(self, file_path: Path, num_elements: int = 80000) -> None:
         """Initialize a PegasusSpectralData class with the header data.
 
         Parameters
         ----------
         file_path : Path
             The file path to the file to load
-        size : int
-            The size of the spectra, by default 80000
+        num_elements : int
+            The number of elements in each spectra, by default 80000
         """
         # Open the file
         with file_path.open(mode="rb") as spec_file:
@@ -54,22 +54,27 @@ class PegasusSpectralData:
             header = spec_file.readline().decode("ascii")
             self.__time: np.float64 = np.float64(header.split()[-1])
 
-            # The np.array that actually stores the data
-            nproc = 5376
-            self.data = np.empty((nproc, 80000))
+            # Load the entire remaining file
+            self.data = np.fromfile(spec_file, dtype=np.float64)
 
-            for ii in range(nproc):
-                struct.unpack("@d", spec_file.read(8))[0]
-                struct.unpack("@d", spec_file.read(8))[0]
-                struct.unpack("@d", spec_file.read(8))[0]
-                struct.unpack("@d", spec_file.read(8))[0]
-                struct.unpack("@d", spec_file.read(8))[0]
-                struct.unpack("@d", spec_file.read(8))[0]
-                for jj in range(80000):
-                    self.data[ii, jj] = struct.unpack("@d", spec_file.read(8))[0]
-            # Load the data
+            # Get the info to reshape the array
+            block_header_size = 6  # The header of each block is 6 elements
+            num_row = num_elements + block_header_size
+            num_col = self.data.size // num_row
 
-            # Rearrange the data into the correct shape
+            # Check that the file is actually the right size for the number of elements
+            # per spectra. Note that this check isn't perfect, it just verifies that the
+            # file can be exactly divided by the number of elements provided.
+            if self.data.size % num_row != 0:
+                err_msg = (
+                    f"The file {file_path} does not have {num_elements} per spectra."
+                )
+                raise ValueError(err_msg)
+
+            # Rearrange the data into the correct shape and trim off the header elements
+            # in each block
+            self.data = self.data.reshape((num_col, num_row))
+            self.data = self.data[:, 6:]
 
     # Define getters for header variables
     @property
