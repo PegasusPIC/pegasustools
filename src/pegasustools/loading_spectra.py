@@ -31,6 +31,26 @@ def og_spectra_reader(file_path: Path) -> np.typing.NDArray[np.float64]:
     return final
 
 
+def og_spectra_reader_with_sum(file_path: Path) -> np.typing.NDArray[np.float64]:
+    """Original reading function. DELETE ME."""
+    nproc = 5376
+    final = np.zeros(80000)
+
+    with file_path.open("rb") as f:
+        f.readline()
+        for _ii in range(nproc):
+            struct.unpack("@d", f.read(8))[0]
+            struct.unpack("@d", f.read(8))[0]
+            struct.unpack("@d", f.read(8))[0]
+            struct.unpack("@d", f.read(8))[0]
+            struct.unpack("@d", f.read(8))[0]
+            struct.unpack("@d", f.read(8))[0]
+            for jj in range(80000):
+                final[jj] += struct.unpack("@d", f.read(8))[0]
+
+    return final
+
+
 class PegasusSpectralData:
     """Holds all the data loaded when loading a spectra file.
 
@@ -87,3 +107,16 @@ class PegasusSpectralData:
             The time in the spectra file
         """
         return self.__time
+
+    def sum_over_meshblocks(self) -> np.typing.NDArray[np.float64]:
+        """Sum over all meshblocks in the spectraself.
+
+        This is equivalent to `np.sum(self.data, axis=0)`.
+
+        Returns
+        -------
+        np.typing.NDArray[np.float64]
+            The summed spectra
+        """
+        summed_spectra: np.typing.NDArray[np.float64] = np.sum(self.data, axis=0)
+        return summed_spectra
