@@ -8,7 +8,6 @@ from pegasustools.loading_data import load_file
 from pegasustools.loading_nbf import PegasusNBFData
 from pegasustools.loading_spectra import (
     PegasusSpectralData,
-    _load_spectra,
     og_spectra_reader,
 )
 
@@ -20,7 +19,6 @@ __all__ = [
     "PegasusNBFData",
     "PegasusSpectralData",
     "__version__",
-    "_load_spectra",
     "load_file",
     "og_spectra_reader",
 ]

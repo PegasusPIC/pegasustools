@@ -4,7 +4,7 @@ from pathlib import Path
 
 import numpy as np
 
-import pegasustools.loading_spectra as pt
+import pegasustools as pt
 
 
 def test__load_spectra() -> None:
@@ -16,8 +16,6 @@ def test__load_spectra() -> None:
     fiducial = pt.og_spectra_reader(file_path)
 
     # Load test data
-    test = pt._load_spectra(file_path)
+    test = pt.PegasusSpectralData(file_path)
 
-    np.testing.assert_array_max_ulp(fiducial, test, maxulp=0)
-
-    print(fiducial.shape)
+    np.testing.assert_array_max_ulp(fiducial, test.data, maxulp=0)

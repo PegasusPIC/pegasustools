@@ -37,21 +37,40 @@ class PegasusSpectralData:
     Stores the time data in a private variable accessible via a getter and stores the spectra data in a numpy array named `data`
     """
 
-    def __init__(self, time: np.float64, size: int = 80000) -> None:
+    def __init__(self, file_path: Path, size: int = 80000) -> None:
         """Initialize a PegasusSpectralData class with the header data.
 
         Parameters
         ----------
-        time : np.float64
-            The simulation time in the file.
+        file_path : Path
+            The file path to the file to load
         size : int
             The size of the spectra, by default 80000
         """
         # Header variable
-        self.__time: np.float64 = time
+        self.__time: np.float64 = np.nan
 
-        # The np.array that actually stores the data
-        self.data: np.typing.NDArray[np.float64] = np.empty(size)
+        # Open the file
+        with file_path.open(mode="rb") as spec_file:
+            # Read the header
+            nproc = 5376
+
+            # The np.array that actually stores the data
+            self.data = np.empty((nproc, 80000))
+
+            spec_file.readline()
+            for ii in range(nproc):
+                struct.unpack("@d", spec_file.read(8))[0]
+                struct.unpack("@d", spec_file.read(8))[0]
+                struct.unpack("@d", spec_file.read(8))[0]
+                struct.unpack("@d", spec_file.read(8))[0]
+                struct.unpack("@d", spec_file.read(8))[0]
+                struct.unpack("@d", spec_file.read(8))[0]
+                for jj in range(80000):
+                    self.data[ii, jj] = struct.unpack("@d", spec_file.read(8))[0]
+            # Load the data
+
+            # Rearrange the data into the correct shape
 
     # Define getters for header variables
     @property
@@ -64,28 +83,3 @@ class PegasusSpectralData:
             The time in the spectra file
         """
         return self.__time
-
-
-def _load_spectra(file_path: Path) -> PegasusSpectralData:
-    # Open the file
-    with file_path.open(mode="rb") as spec_file:
-        # Read the header
-        nproc = 5376
-        final = np.zeros((nproc, 80000))
-
-        spec_file.readline()
-        for ii in range(nproc):
-            struct.unpack("@d", spec_file.read(8))[0]
-            struct.unpack("@d", spec_file.read(8))[0]
-            struct.unpack("@d", spec_file.read(8))[0]
-            struct.unpack("@d", spec_file.read(8))[0]
-            struct.unpack("@d", spec_file.read(8))[0]
-            struct.unpack("@d", spec_file.read(8))[0]
-            for jj in range(80000):
-                final[ii, jj] = struct.unpack("@d", spec_file.read(8))[0]
-
-    return final
-
-    # Load the data
-
-    # Rearrange the data into the correct shape

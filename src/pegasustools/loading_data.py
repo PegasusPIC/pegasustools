@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from .loading_nbf import PegasusNBFData, _load_nbf
-from .loading_spectra import PegasusSpectralData, _load_spectra
+from .loading_spectra import PegasusSpectralData
 
 
 def load_file(filepath: Path) -> PegasusNBFData | PegasusSpectralData:
@@ -40,7 +40,7 @@ def load_file(filepath: Path) -> PegasusNBFData | PegasusSpectralData:
     if filepath.suffix == ".nbf":
         return _load_nbf(filepath)
     elif filepath.suffix == ".spec":  # noqa: RET505
-        return _load_spectra(filepath)
+        return PegasusSpectralData(filepath)
 
     # If the file type is not dealt with in one of the above branches then raise an exception
     err_msg = f"The file {filepath} does not appear to be a Pegasus++ File."
