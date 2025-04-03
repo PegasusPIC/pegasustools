@@ -34,7 +34,8 @@ def og_spectra_reader(file_path: Path) -> np.typing.NDArray[np.float64]:
 class PegasusSpectralData:
     """Holds all the data loaded when loading a spectra file.
 
-    Stores the time data in a private variable accessible via a getter and stores the spectra data in a numpy array named `data`
+    Stores the time data in a private variable accessible via a getter and stores the
+    spectra data in a numpy array named `data`
     """
 
     def __init__(self, file_path: Path, size: int = 80000) -> None:
@@ -50,7 +51,7 @@ class PegasusSpectralData:
         # Open the file
         with file_path.open(mode="rb") as spec_file:
             # Load header variable
-            header = spec_file.readline().decode('ascii')
+            header = spec_file.readline().decode("ascii")
             self.__time: np.float64 = np.float64(header.split()[-1])
 
             # The np.array that actually stores the data

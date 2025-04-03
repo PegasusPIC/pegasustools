@@ -55,7 +55,7 @@ def test__load_nbf_file_too_small() -> None:
 
 
 def test__load_nbf_file_wrong_first_line() -> None:
-    """Test for the exception that should appear if the file doesn't start with the correct line."""
+    """Test for the incorrect first line exception."""
     # Setup paths
     file_path = Path(__file__).parent.resolve() / "data" / "too_short.nbf"
     with file_path.open("wb") as file:

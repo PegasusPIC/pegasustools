@@ -22,6 +22,9 @@ def test_load_file_nbf(dims: int) -> None:
     # # Load file my new function
     test_data = pt.load_file(file_path)
 
+    # Verify the type
+    assert isinstance(test_data, pt.PegasusNBFData)
+
     # Compare header data
     np.testing.assert_array_max_ulp(fiducial_data.time, test_data.time, maxulp=3)
     assert fiducial_data.big_endian == test_data.big_endian
@@ -57,7 +60,7 @@ def test_load_file_file_does_not_exist() -> None:
 
 
 def test_load_file_file_has_wrong_extension() -> None:
-    """Test for the exception that should appear if the file does not have a Pegasus++ extension."""
+    """Test for exception triggered if the file does not have a Pegasus++ extension."""
     # Setup paths
     file_path = (
         Path(__file__).parent.resolve()

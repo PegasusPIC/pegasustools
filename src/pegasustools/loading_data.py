@@ -42,6 +42,7 @@ def load_file(filepath: Path) -> PegasusNBFData | PegasusSpectralData:
     elif filepath.suffix == ".spec":  # noqa: RET505
         return PegasusSpectralData(filepath)
 
-    # If the file type is not dealt with in one of the above branches then raise an exception
+    # If the file type is not dealt with in one of the above branches then raise an
+    # exception
     err_msg = f"The file {filepath} does not appear to be a Pegasus++ File."
     raise ValueError(err_msg)

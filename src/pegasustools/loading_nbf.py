@@ -15,7 +15,9 @@ import numpy as np
 class PegasusNBFData:
     """Holds all the data loaded when loading a NBF file.
 
-    It stores all the header data into private variables that are accessible via getters and stores the data arrays in a dictionary named `data` which is indexed via the variable field names in the NBF file.
+    It stores all the header data into private variables that are accessible via getters
+    and stores the data arrays in a dictionary named `data` which is indexed via the
+    variable field names in the NBF file.
     """
 
     def __init__(
@@ -56,10 +58,12 @@ class PegasusNBFData:
         # The dictionary that actually stores the data
         self.data: Annotated[
             dict[str, np.typing.NDArray[np.float32]],
-            "Contains the loaded data in a dictionary with keys matching the variable names in the HBF file.",
+            "Contains the loaded data in a dictionary with keys matching the variable "
+            "names in the HBF file.",
         ] = {}
 
-        # Setup nbf_data.data member. Note that by the end of the reading these axis will be swapped to x1, x2, x3
+        # Setup nbf_data.data member. Note that by the end of the reading these axis
+        # will be swapped to x1, x2, x3
         data_shape: tuple[int, int, int] = (
             int(self.mesh_params["nx3"]),
             int(self.mesh_params["nx2"]),
@@ -82,12 +86,13 @@ class PegasusNBFData:
 
     @property
     def big_endian(self) -> bool:
-        """Get the endianness of the NBF file. True if the data is big endian, False otherwise.
+        """Get the endianness of the NBF file.
 
         Returns
         -------
         bool
-            The endianness of the NBF file. True if the data is big endian, False otherwise.
+            The endianness of the NBF file. True if the data is big endian,
+            False otherwise.
         """
         return self.__big_endian
 
@@ -179,7 +184,8 @@ def _load_nbf_header(nbf_file: BinaryIO) -> PegasusNBFData:
     list_of_variables = list(header_list[4].split()[1:])
 
     # Line 5-7: The mesh variables
-    # Combine all three lines, split at whitespace, and discard the "Mesh:" part of the line
+    # Combine all three lines, split at whitespace, and discard the "Mesh:" part of the
+    # line
     combined_lines = (header_list[5] + header_list[6] + header_list[7]).split()[1:]
     # Loop through elements to build a dictionary with values and keys
     mesh_params: dict[str, np.float32 | int] = {}
@@ -261,7 +267,8 @@ def _load_nbf(filepath: Path) -> PegasusNBFData:
         # Read the header
         nbf_data = _load_nbf_header(nbf_file)
 
-        # Compute the required byte offsets and sizes needed to make each iteration independent
+        # Compute the required byte offsets and sizes needed to make each iteration
+        # independent
 
         # The size of the file header
         header_size = nbf_file.tell()
@@ -292,7 +299,8 @@ def _load_nbf(filepath: Path) -> PegasusNBFData:
                 nbf_data,
             )
 
-    # Swap axis so the data is formatted as (Nx1, Nx2, Nx3) and remove dimensions of length 1
+    # Swap axis so the data is formatted as (Nx1, Nx2, Nx3) and remove dimensions of
+    # length 1.
     # Moving this into _load_nbf_meshblock causes a 30% slowdown
     for key in nbf_data.data:
         nbf_data.data[key] = np.swapaxes(nbf_data.data[key], 0, 2)

@@ -11,14 +11,17 @@ import pegasustools as pt
 def generate_random_nbf_file(
     path: Path, seed: int | None = None, dims: int = 3
 ) -> pt.PegasusNBFData:
-    """Create a pt.PegasusNBFData object filled with random data and write it to a file. Only intended to help with testing.
+    """Create a pt.PegasusNBFData object filled with random data and write it to a file.
+
+    Only intended to help with testing.
 
     Parameters
     ----------
     path : Path
         The filepath to write the new .nbf file to
     seed : int | None, optional
-        The seed to use for the PRNG, by default None which will use OS generated entropy
+        The seed to use for the PRNG, by default None which will use OS generated
+        entropy
     dims : int, optional
         The number of dimensions of the data, by default 3
 
@@ -98,8 +101,8 @@ def generate_random_nbf_file(
 def create_nbf(filepath: Path, nbf_data: pt.PegasusNBFData) -> None:
     """Create an NBF file from a pt.PegasusNBFData object.
 
-    This is intended solely as a tool to help with testing and, while I believe it is correct,
-    it should not be used outside of testing PegasusTools.
+    This is intended solely as a tool to help with testing and, while I believe it is
+    correct, it should not be used outside of testing PegasusTools.
 
     Parameters
     ----------
@@ -114,10 +117,10 @@ def create_nbf(filepath: Path, nbf_data: pt.PegasusNBFData) -> None:
         f"Number of MeshBlocks = {nbf_data.num_meshblocks}\n"
         f"Number of variables = {len(nbf_data.list_of_variables)}\n"
         f"Variables:   {'   '.join(nbf_data.list_of_variables)}   \n"
-        f"Mesh:   nx1={nbf_data.mesh_params['nx1']}   x1min={nbf_data.mesh_params['x1min']:.14e}   x1max={nbf_data.mesh_params['x1max']:.14e}\n"
-        f"        nx2={nbf_data.mesh_params['nx2']}   x2min={nbf_data.mesh_params['x2min']:.14e}   x2max={nbf_data.mesh_params['x2max']:.14e}\n"
-        f"        nx3={nbf_data.mesh_params['nx3']}   x3min={nbf_data.mesh_params['x3min']:.14e}   x3max={nbf_data.mesh_params['x3max']:.14e}\n"
-        f"MeshBlock: nx1={nbf_data.meshblock_params['nx1']}   nx2={nbf_data.meshblock_params['nx2']}   nx3={nbf_data.meshblock_params['nx3']}\n"
+        f"Mesh:   nx1={nbf_data.mesh_params['nx1']}   x1min={nbf_data.mesh_params['x1min']:.14e}   x1max={nbf_data.mesh_params['x1max']:.14e}\n"  # noqa: E501
+        f"        nx2={nbf_data.mesh_params['nx2']}   x2min={nbf_data.mesh_params['x2min']:.14e}   x2max={nbf_data.mesh_params['x2max']:.14e}\n"  # noqa: E501
+        f"        nx3={nbf_data.mesh_params['nx3']}   x3min={nbf_data.mesh_params['x3min']:.14e}   x3max={nbf_data.mesh_params['x3max']:.14e}\n"  # noqa: E501
+        f"MeshBlock: nx1={nbf_data.meshblock_params['nx1']}   nx2={nbf_data.meshblock_params['nx2']}   nx3={nbf_data.meshblock_params['nx3']}\n"  # noqa: E501
     )
 
     with filepath.open(mode="wb") as nbf_file:
