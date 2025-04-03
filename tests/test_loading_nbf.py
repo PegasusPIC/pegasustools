@@ -19,7 +19,7 @@ def test__load_nbf(dims: int) -> None:
     # Create test file & nbf_data
     fiducial_data = pt_testing.generate_random_nbf_file(file_path, seed=42, dims=dims)
 
-    # # Load file my new function
+    # Load file
     test_data = pt._load_nbf(file_path)
 
     # Compare header data
