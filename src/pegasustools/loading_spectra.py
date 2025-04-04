@@ -58,15 +58,25 @@ class PegasusSpectralData:
     spectra data in a numpy array named `data`
     """
 
-    def __init__(self, file_path: Path, num_elements: int = 80000) -> None:
+    def __init__(
+        self, file_path: Path, num_parallel: int = 400, num_perpendicular: int = 200
+    ) -> None:
         """Initialize a PegasusSpectralData class with the header data.
 
         Parameters
         ----------
         file_path : Path
             The file path to the file to load
-        num_elements : int
-            The number of elements in each spectra, by default 80000
+        num_parallel : int, optional
+            The value of n_prl used in the peginput file, by default 400
+        num_perpendicular : int, optional
+            The value of n_prp used in the peginput file, by default 200
+
+        Raises
+        ------
+        ValueError
+            Raised if the file does not have the right number of elements for the
+            provided num_parallel and num_perpendicular
         """
         # Open the file
         with file_path.open(mode="rb") as spec_file:
@@ -79,7 +89,7 @@ class PegasusSpectralData:
 
             # Get the info to reshape the array
             block_header_size = 6  # The header of each block is 6 elements
-            num_row = num_elements + block_header_size
+            num_row = num_parallel * num_perpendicular + block_header_size
             num_col = self.data.size // num_row
 
             # Check that the file is actually the right size for the number of elements
@@ -87,7 +97,9 @@ class PegasusSpectralData:
             # file can be exactly divided by the number of elements provided.
             if self.data.size % num_row != 0:
                 err_msg = (
-                    f"The file {file_path} does not have {num_elements} per spectra."
+                    f"The file {file_path} does not have the right number of "
+                    f"elements for the values of {num_parallel = } and "
+                    f"{num_perpendicular = } provided."
                 )
                 raise ValueError(err_msg)
 
