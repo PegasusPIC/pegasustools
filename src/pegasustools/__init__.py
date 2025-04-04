@@ -6,11 +6,7 @@ PegasusTools: Analysis package for the Pegasus PIC code.
 # Import all relevant modules into the pegasustools namespacess
 from pegasustools.loading_data import load_file
 from pegasustools.loading_nbf import PegasusNBFData
-from pegasustools.loading_spectra import (
-    PegasusSpectralData,
-    og_spectra_reader,
-    og_spectra_reader_with_sum,
-)
+from pegasustools.loading_spectra import PegasusSpectralData
 
 # Set version
 from ._version import version as __version__
@@ -21,6 +17,4 @@ __all__ = [
     "PegasusSpectralData",
     "__version__",
     "load_file",
-    "og_spectra_reader",
-    "og_spectra_reader_with_sum",
 ]

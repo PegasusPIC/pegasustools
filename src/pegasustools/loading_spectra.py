@@ -5,50 +5,9 @@ This module provides:
 - _load_spectra: A function for loading spectra files
 """
 
-import struct
 from pathlib import Path
 
 import numpy as np
-
-
-def og_spectra_reader(file_path: Path) -> np.typing.NDArray[np.float64]:
-    """Original reading function. DELETE ME."""
-    nproc = 5376
-    final = np.zeros((nproc, 80000))
-
-    with file_path.open("rb") as f:
-        f.readline()
-        for ii in range(nproc):
-            struct.unpack("@d", f.read(8))[0]
-            struct.unpack("@d", f.read(8))[0]
-            struct.unpack("@d", f.read(8))[0]
-            struct.unpack("@d", f.read(8))[0]
-            struct.unpack("@d", f.read(8))[0]
-            struct.unpack("@d", f.read(8))[0]
-            for jj in range(80000):
-                final[ii, jj] = struct.unpack("@d", f.read(8))[0]
-
-    return final
-
-
-def og_spectra_reader_with_sum(file_path: Path) -> np.typing.NDArray[np.float64]:
-    """Original reading function. DELETE ME."""
-    nproc = 5376
-    final = np.zeros(80000)
-
-    with file_path.open("rb") as f:
-        f.readline()
-        for _ii in range(nproc):
-            struct.unpack("@d", f.read(8))[0]
-            struct.unpack("@d", f.read(8))[0]
-            struct.unpack("@d", f.read(8))[0]
-            struct.unpack("@d", f.read(8))[0]
-            struct.unpack("@d", f.read(8))[0]
-            struct.unpack("@d", f.read(8))[0]
-            for jj in range(80000):
-                final[jj] += struct.unpack("@d", f.read(8))[0]
-
-    return final
 
 
 class PegasusSpectralData:
