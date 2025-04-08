@@ -58,7 +58,7 @@ jobs:
           subject-path: "dist/*"
 
       - name: Upload to TestPyPI
-        uses: pypa/gh-action-pypi-publish@b223cbbc63a3e911c7e6093d72760c29bef664f4
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
 
