@@ -27,7 +27,6 @@ repos:
       - id: mixed-line-ending # Replaces or checks mixed line ending. i.e. changes all to lf or crlf
       - id: name-tests-test # Check that all pytest files are named correctly
         args: ["--pytest-test-first"]
-        exclude: "nbf_testing_utils.py"
       - id: requirements-txt-fixer # Sorts entries in requirements.txt and constraints.txt and removes incorrect entry for pkg-resources==0.0.
       - id: trailing-whitespace # Trims trailing whitespace.
 

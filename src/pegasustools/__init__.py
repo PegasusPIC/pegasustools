@@ -3,8 +3,7 @@
 pegasustools: Analysis package for the Pegasus PIC code.
 """
 
-# Import all relevant modules into the pegasustools namespace
-from pegasustools.loading_data import load_file
+# Import all relevant modules into the pegasustools namespacess
 from pegasustools.loading_nbf import PegasusNBFData
 
 # Set version
@@ -14,5 +13,4 @@ from ._version import version as __version__
 __all__ = [
     "PegasusNBFData",
     "__version__",
-    "load_file",
 ]
