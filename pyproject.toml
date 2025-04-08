@@ -34,12 +34,12 @@ dependencies = [
 
 [project.optional-dependencies]
 test = [
-  "pytest >=8",
-  "pytest-cov >=6",
+  "pytest>=8",
+  "pytest-cov>=6",
 ]
 dev = [
-  "pytest >=8",
-  "pytest-cov >=6",
+  "pytest>=8",
+  "pytest-cov>=6",
 ]
 docs = [
   "sphinx>=7.0",
@@ -48,7 +48,8 @@ docs = [
   "sphinx_autodoc_typehints",
   "furo>=2023.08.17",
   "nbsphinx>=0.9.7",
-  "ipykernel"
+  "ipykernel",
+  "pytest>=8"
 ]
 
 [project.urls]
@@ -128,7 +129,6 @@ ignore = [
   "E111",
   "E114",
   "E117",
-  "E501",
   "D206",
   "D300",
   "Q",
@@ -138,7 +138,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["T20", "S101", "INP001", "SLF001"]
+"tests/**" = ["T20", "S101", "INP001", "SLF001", "N802", "PLR2004"]
 "noxfile.py" = ["T20"]
 "docs/**" = ["T20", "INP001"]
 

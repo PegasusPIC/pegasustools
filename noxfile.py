@@ -40,7 +40,11 @@ def tests(session: nox.Session) -> None:
 
 @nox.session(reuse_venv=True)
 def docs(session: nox.Session) -> None:
-    """Build the docs. Pass --non-interactive to avoid serving. First positional argument is the target directory."""
+    """Build the docs.
+
+    Pass --non-interactive to avoid serving. First positional argument is the target
+    directory.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-b", dest="builder", default="html", help="Build target (default: html)"
