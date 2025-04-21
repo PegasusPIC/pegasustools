@@ -155,3 +155,22 @@ class PegasusSpectralData:
         self.spectra_prp = (
             summed_spectra.sum(axis=1) / norm / (self.__max_w_prp / self.__n_prp)
         )
+
+        # ===== Beginning of new section =====
+        summed_spectra = self.data.sum(axis=0)
+
+        # v_prl array goes from [-vprlmax to vprlmax]
+        dv_prl = 2.0 * self.__max_w_prl / self.__n_prl
+        # v_prp array goes from [0 to vprpmax]
+        dv_prp = self.__max_w_prp / self.__n_prp
+        norm = summed_spectra.sum() * dv_prl * dv_prp
+
+        # normalized, averaged f(wprl,wprp) such that int(f(wprl,wprp) dwprl dwprp) = 1
+        # Note: this is not the correct normalization for edotv outputs (edotv should be
+        # normalized relative to f, not itself)
+        self.data_avg = summed_spectra / norm
+        v_prp = np.linspace(-0, vprpmax, Nprp)
+
+        self.spectra_prl = self.data_avg.sum(axis=0) * dv_prp
+        self.spectra_prp = 0.5 * (self.data_avg / v_prp).sum(axis=1) * dv_prl
+        # ===== End of new section =====

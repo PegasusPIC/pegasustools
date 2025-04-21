@@ -5,6 +5,11 @@
         "mpiio",
         "pypa",
         "testpypi",
+        "wprl",
+        "wprp",
+        "dwprl",
+        "dwprp",
+        "edotv",
         "unconcat"
     ]
 }
