@@ -30,6 +30,7 @@ dynamic = ["version"]
 dependencies = [
     "numpy>=2.2",
     "matplotlib>=3.10",
+    "h5py>=3.13",
 ]
 
 [project.optional-dependencies]
