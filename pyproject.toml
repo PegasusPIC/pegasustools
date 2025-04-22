@@ -30,6 +30,7 @@ dynamic = ["version"]
 dependencies = [
     "numpy>=2.2",
     "matplotlib>=3.10",
+    "polars-u64-idx[numpy]>=1.29",
 ]
 
 [project.optional-dependencies]
@@ -89,8 +90,8 @@ testpaths = [
 
 [tool.coverage]
 run.source = ["pegasustools"]
+run.omit = ["tests/*", "noxfile.py", "src/pegasustools/_version.py"]
 report.exclude_also = [
-  '\.\.\.',
   'if typing.TYPE_CHECKING:',
 ]
 
