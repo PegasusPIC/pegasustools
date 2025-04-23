@@ -169,12 +169,12 @@ def collate_tracks_from_ascii(source_directory: Path, destination_path: Path) ->
         raise ValueError(msg)
 
     # Get the list of files
-    track_dat_files = tuple(source_directory.glob("*.track.dat"))
+    track_dat_paths = tuple(source_directory.glob("*.track.dat"))
 
     # ===== Compute some meta data to save to the HDF5 file =====
 
     # Get a list of the fields
-    with track_dat_files[0].open("r") as track_file:
+    with track_dat_paths[0].open("r") as track_file:
         # Read the header
         _ = track_file.readline()
         column_headers = track_file.readline().split()
@@ -185,7 +185,7 @@ def collate_tracks_from_ascii(source_directory: Path, destination_path: Path) ->
         column_names.append("mu")  # The magnetic moment, computed before saving to disk
 
     # Determine the number of particles and number of meshblocks
-    names = [file_path.stem for file_path in track_dat_files]
+    names = [file_path.stem for file_path in track_dat_paths]
     particle_block_ids = np.array([name.split(".")[1:3] for name in names]).astype(int)
     num_blocks = particle_block_ids[:, 1].max()
     num_particles = particle_block_ids[:, 0].max()
@@ -193,7 +193,7 @@ def collate_tracks_from_ascii(source_directory: Path, destination_path: Path) ->
     # Create the HDF5 file and add metadata
     with h5py.File(destination_path, "w-") as collated_file:
         # Add name of the run to the attributes
-        collated_file.attrs["name"] = track_dat_files[0].stem.split(".")[0]
+        collated_file.attrs["name"] = track_dat_paths[0].stem.split(".")[0]
 
         # Add a list of the fields to the attributes
         collated_file.attrs["fields"] = column_names
