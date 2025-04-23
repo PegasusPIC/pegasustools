@@ -7,18 +7,18 @@ import numpy as np
 import pegasustools as pt
 
 
-def test_PegasusTrackASCII() -> None:
-    """Test the PegasusTrackASCII constructor."""
+def test_PegasusTrack_ASCII() -> None:
+    """Test the PegasusTrack constructor with an ASCII file."""
     # Setup path
     file_path = (
-        Path(__file__).parent.resolve() / "data" / "test_PegasusTrackASCII.track.dat"
+        Path(__file__).parent.resolve() / "data" / "test_PegasusTrack_ASCII.track.dat"
     )
 
     # Generate the data
     fid_block_id, fid_particle_id, fid_data = generate_random_track_ascii(file_path)
 
     # Load test data
-    test = pt.PegasusTrackASCII(file_path)
+    test = pt.PegasusTrack(file_path)
 
     print(test.data.shape)
     print(test.data[0])

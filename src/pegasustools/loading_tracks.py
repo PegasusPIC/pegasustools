@@ -1,7 +1,7 @@
 """Provides the utilities required to deal with particle track data.
 
 This module provides:
-- TODO
+- PegasusTrack: A class for holding track data from particles
 """
 
 from pathlib import Path
@@ -9,16 +9,78 @@ from pathlib import Path
 import numpy as np
 
 
-class PegasusTrackASCII:
-    """Holds all the data loaded when loading an ASCII track file (.track.dat files).
+class PegasusTrack:
+    """Holds all the data for a particle track.
 
     It stores all the header data into private variables that are accessible via getters
     and stores the data in a numpy structured array named 'data' with column names
-    identical to the column names in the .track.dat file.
+    identical to the column names in the file.
     """
 
-    def __init__(self, file_path: Path) -> None:
-        """Initialize a PegasusTrackASCII object from the .track.dat file at file_path.
+    def __init__(
+        self,
+        file_path: Path,
+        block_id: int | None = None,
+        particle_id: int | None = None,
+    ) -> None:
+        """Initialize a PegasusTrack object.
+
+        PegasusTrack objects can be initialized in one of two ways:
+
+        1. From the raw .track.dat file at file_path
+        2. From the collated track data in the HDF5 file at file_path. It will get the
+           dataset with particle_id and block_id
+
+        Parameters
+        ----------
+        file_path : Path
+            The path to the file with the track data
+        block_id : int | None, optional
+            The block ID for the particle track to load. Required when loading a track
+            from a collated HDF5 file, ignored otherwise.
+        particle_id : int | None, optional
+            The particle ID for the particle track to load. Required when loading a
+            track from a collated HDF5 file, ignored otherwise.
+
+        Raises
+        ------
+        ValueError
+            Raised if block_id and particle_id are not positive ints when loading from a
+            collated HDF5 file.
+        RuntimeError
+            Raised if the file extension does not match either `.hdf5` or `.track.dat`.
+        """
+        # Create the member variables
+        self.__block_id: int
+        self.__particle_id: int
+        self.data: np.typing.NDArray[np.float32]
+
+        # Check the extension and dispatch to the proper loading function
+        extension = file_path.suffixes
+        if extension == [".track", ".dat"]:
+            self.__load_from_ascii(file_path)
+        elif extension == [".hdf5"]:
+            if not (isinstance(block_id, int) and isinstance(particle_id, int)):
+                msg = (
+                    "block_id and particle_id are required to be ints when loading "
+                    "from an HDF5 file."
+                )
+                raise ValueError(msg)
+            self.__load_from_hdf5(file_path, block_id, particle_id)
+        else:
+            msg = (
+                f"The file at {file_path} does not appear to be a Pegasus++ "
+                "Tracked Particle file"
+            )
+            raise RuntimeError(msg)
+
+    def __load_from_hdf5(
+        self, file_path: Path, block_id: int, particle_id: int
+    ) -> None:
+        pass
+
+    def __load_from_ascii(self, file_path: Path) -> None:
+        """Load the track data from an ascii file at file_path.
 
         Parameters
         ----------
