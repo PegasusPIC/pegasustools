@@ -20,8 +20,8 @@ class PegasusTrack:
     def __init__(
         self,
         file_path: Path,
-        block_id: int | None = None,
-        particle_id: int | None = None,
+        block_id: int = -1,
+        particle_id: int = -1,
     ) -> None:
         """Initialize a PegasusTrack object.
 
@@ -35,10 +35,10 @@ class PegasusTrack:
         ----------
         file_path : Path
             The path to the file with the track data
-        block_id : int | None, optional
+        block_id : int, optional
             The block ID for the particle track to load. Required when loading a track
             from a collated HDF5 file, ignored otherwise.
-        particle_id : int | None, optional
+        particle_id : int, optional
             The particle ID for the particle track to load. Required when loading a
             track from a collated HDF5 file, ignored otherwise.
 
@@ -53,25 +53,22 @@ class PegasusTrack:
         # Create the member variables
         self.__block_id: int
         self.__particle_id: int
-        self.data: np.typing.NDArray[np.float32]
+        self.data: np.typing.ArrayLike
 
         # Check the extension and dispatch to the proper loading function
         extension = file_path.suffixes
         if extension == [".track", ".dat"]:
             self.__load_from_ascii(file_path)
         elif extension == [".hdf5"]:
-            if not (isinstance(block_id, int) and isinstance(particle_id, int)):
+            if block_id < 0 or particle_id < 0:
                 msg = (
-                    "block_id and particle_id are required to be ints when loading "
-                    "from an HDF5 file."
+                    "block_id and particle_id are required when loading a dataset from "
+                    "a collated HDF5 file and they both must be positive ints."
                 )
                 raise ValueError(msg)
             self.__load_from_hdf5(file_path, block_id, particle_id)
         else:
-            msg = (
-                f"The file at {file_path} does not appear to be a Pegasus++ "
-                "Tracked Particle file"
-            )
+            msg = f"The file at {file_path} is not a Pegasus++ tracked particle file."
             raise RuntimeError(msg)
 
     def __load_from_hdf5(
@@ -108,10 +105,7 @@ class PegasusTrack:
                 "with",
             ]
             if header[:7] != fiducial_header_start:
-                msg = (
-                    f"The file at {file_path} does not appear to be a Pegasus++ "
-                    "Tracked Particle file"
-                )
+                msg = f"The file at {file_path} is not a Pegasus++ .track.dat file."
                 raise RuntimeError(msg)
 
             # Parse the header
