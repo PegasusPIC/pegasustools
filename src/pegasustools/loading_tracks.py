@@ -4,7 +4,10 @@ This module provides:
 - PegasusTrack: A class for holding track data from particles
 """
 
+import concurrent.futures
+import multiprocessing
 from pathlib import Path
+from typing import Any
 
 import h5py
 import numpy as np
@@ -165,7 +168,12 @@ class PegasusTrack:
         return self.__block_id
 
 
-def collate_tracks_from_ascii(source_directory: Path, destination_path: Path) -> None:
+def collate_tracks_from_ascii(
+    source_directory: Path, destination_path: Path, max_processes: int = 12
+) -> None:
+    # 12 the the maximum number of processes that can be used before the parallel
+    # speedup stops improving
+
     # Verify the source path
     if not source_directory.is_dir():
         msg = f"{source_directory} is not a directory or does not exist."
@@ -207,19 +215,29 @@ def collate_tracks_from_ascii(source_directory: Path, destination_path: Path) ->
 
     # Loop over list of files in parallel and process then write them to an HDF5 file.
     # Making sure to lock the HDF5 file to avoid parallel writes.
-    # TODO: Currently this is serial, make it parallel once we know it works # noqa: TD002, TD003, E501, FIX002
+    with concurrent.futures.ProcessPoolExecutor(max_workers=max_processes) as executor:
+        lock = multiprocessing.Manager().Lock()
+        _ = [
+            executor.submit(
+                _parallel_ascii_collater, track_path, destination_path, lock
+            )
+            for track_path in track_dat_paths
+        ]
 
-    for track_path in track_dat_paths:
-        # Load the file into memory
-        loaded_track = PegasusTrack(track_path)
 
-        dataset_name = f"{loaded_track.block_id}-{loaded_track.particle_id}"
+def _parallel_ascii_collater(
+    track_path: Path,
+    destination_path: Path,
+    lock: Any,  # noqa: ANN401
+) -> None:
+    # Load the file into memory
+    loaded_track = PegasusTrack(track_path)
 
-        # Save the data to the HDF5 file
-        with h5py.File(destination_path, "r+") as collated_file:
-            if dataset_name not in collated_file:
-                dataset = collated_file.create_dataset(
-                    dataset_name, data=loaded_track.data
-                )
-                dataset.attrs["block_id"] = loaded_track.block_id
-                dataset.attrs["particle_id"] = loaded_track.particle_id
+    dataset_name = f"{loaded_track.block_id}-{loaded_track.particle_id}"
+
+    # Save the data to the HDF5 file
+    with lock, h5py.File(destination_path, "r+") as collated_file:
+        if dataset_name not in collated_file:
+            dataset = collated_file.create_dataset(dataset_name, data=loaded_track.data)
+            dataset.attrs["block_id"] = loaded_track.block_id
+            dataset.attrs["particle_id"] = loaded_track.particle_id
