@@ -56,7 +56,10 @@ def test_PegasusTrack_wrong_extension() -> None:
     with file_path.open("w") as file:
         file.write("this is placeholder text\n")
 
-    err_msg = f"The file at {file_path} is not a Pegasus++ tracked particle file."
+    err_msg = (
+        f"The file at {file_path} with extension ['.txt'] is not a "
+        "Pegasus++ tracked particle file."
+    )
     with pytest.raises(RuntimeError, match=re.escape(err_msg)):
         pt.PegasusTrack(file_path)
 
