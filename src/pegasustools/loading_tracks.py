@@ -169,8 +169,28 @@ class PegasusTrack:
 
 
 def collate_tracks_from_ascii(
-    source_directory: Path, destination_path: Path, max_processes: int = 12
+    source_directory: Path, destination_path: Path | None = None, max_processes: int = 6
 ) -> None:
+    """Collate the .track.dat files in a directory into one file.
+
+    Parameters
+    ----------
+    source_directory : Path
+        The path to the directory with the .track.dat files
+    destination_path : Path, optional
+        The path with filename where the HDF5 file should be created. Defaults to
+        putting the HDF5 file in the same directory as the track.dat files with the name
+        `<problem-name>_collated_tracks.hdf5`
+    max_processes : int, optional
+        The number of processes to use. The default of 6 was chosen empirically since
+        that was the maximum number of processes that can be used before the parallel
+        speedup stops improving significantly on Della.
+
+    Raises
+    ------
+    ValueError
+        Raised if source_directory does not exist or isn't a directory.
+    """
     # 12 the the maximum number of processes that can be used before the parallel
     # speedup stops improving
 
@@ -181,6 +201,12 @@ def collate_tracks_from_ascii(
 
     # Get the list of files
     track_dat_paths = tuple(source_directory.glob("*.track.dat"))
+
+    # Set the destination file name if it isn't provided
+    if destination_path is None:
+        problem_name = track_dat_paths[0].name.split(".")[0]
+        name = f"{problem_name}_collated_tracks.hdf5"
+        destination_path = source_directory / name
 
     # ===== Compute some meta data to save to the HDF5 file =====
 
