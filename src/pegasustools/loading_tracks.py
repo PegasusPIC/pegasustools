@@ -58,7 +58,7 @@ class PegasusTrack:
 
         # Check the extension and dispatch to the proper loading function
         extension = file_path.suffixes
-        if extension == [".track", ".dat"]:
+        if extension[-2:] == [".track", ".dat"]:
             self.__load_from_ascii(file_path)
         elif extension == [".hdf5"]:
             if block_id < 0 or particle_id < 0:
@@ -69,7 +69,10 @@ class PegasusTrack:
                 raise ValueError(msg)
             self.__load_from_hdf5(file_path, block_id, particle_id)
         else:
-            msg = f"The file at {file_path} is not a Pegasus++ tracked particle file."
+            msg = (
+                f"The file at {file_path} with extension {extension} is not a "
+                "Pegasus++ tracked particle file."
+            )
             raise RuntimeError(msg)
 
     def __load_from_hdf5(
@@ -204,3 +207,19 @@ def collate_tracks_from_ascii(source_directory: Path, destination_path: Path) ->
 
     # Loop over list of files in parallel and process then write them to an HDF5 file.
     # Making sure to lock the HDF5 file to avoid parallel writes.
+    # TODO: Currently this is serial, make it parallel once we know it works # noqa: TD002, TD003, E501, FIX002
+
+    for track_path in track_dat_paths:
+        # Load the file into memory
+        loaded_track = PegasusTrack(track_path)
+
+        dataset_name = f"{loaded_track.block_id}-{loaded_track.particle_id}"
+
+        # Save the data to the HDF5 file
+        with h5py.File(destination_path, "r+") as collated_file:
+            if dataset_name not in collated_file:
+                dataset = collated_file.create_dataset(
+                    dataset_name, data=loaded_track.data
+                )
+                dataset.attrs["block_id"] = loaded_track.block_id
+                dataset.attrs["particle_id"] = loaded_track.particle_id
