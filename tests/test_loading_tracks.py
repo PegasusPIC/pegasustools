@@ -109,6 +109,65 @@ def test_PegasusTrack_bad_ids() -> None:
         pt.PegasusTrack(file_path, particle_id=-10)
 
 
+def test_collate_tracks_from_ascii() -> None:
+    """Test the collate_tracks_from_ascii function."""
+    # Setup paths
+    source_directory = (
+        Path(__file__).parent.resolve() / "data" / "collate_tracks_from_ascii"
+    )
+    source_directory.mkdir(exist_ok=True)
+    test_path_default = source_directory / "problem_collated_tracks.hdf5"
+    test_path_custom = source_directory / "custom_name.hdf5"
+
+    # Delete the HDF5 files if they exist
+    if test_path_default.exists():
+        test_path_default.unlink()
+    if test_path_custom.exists():
+        test_path_custom.unlink()
+
+    # Generate the data
+    fid_data = {}
+    for block_id in range(2):
+        for particle_id in range(3):
+            key = f"{block_id}-{particle_id}"
+            fid_data[key] = generate_random_track_ascii(
+                source_directory / f"problem.0{particle_id}.0000{block_id}.track.dat"
+            )
+
+    # Collate the test data
+    # Using default destination path
+    pt.collate_tracks_from_ascii(source_directory)
+    # Using custom destination path
+    pt.collate_tracks_from_ascii(source_directory, test_path_custom)
+
+    # Check correctness
+    for key in fid_data:
+        for test_path in [test_path_custom, test_path_default]:
+            block_id = fid_data[key][0]
+            particle_id = fid_data[key][1]
+            test = pt.PegasusTrack(test_path, block_id, particle_id)
+
+            assert test.block_id == block_id
+            assert test.particle_id == particle_id
+
+            for i, field in enumerate(test.data.dtype.names):
+                np.testing.assert_array_max_ulp(
+                    fid_data[key][2][:, i].astype(np.float32),
+                    test.data[field].astype(np.float32),
+                    maxulp=10,
+                )
+
+
+def test_collate_tracks_from_ascii_no_directory() -> None:
+    """Test the collate_tracks_from_ascii function."""
+    # Setup path
+    source_directory = Path("/fake/path/here")
+
+    err_msg = f"{source_directory} is not a directory or does not exist."
+    with pytest.raises(ValueError, match=re.escape(err_msg)):
+        pt.collate_tracks_from_ascii(source_directory)
+
+
 def generate_random_track_ascii(
     file_path: Path, seed: int | None = None
 ) -> tuple[int, int, np.typing.NDArray[np.float32]]:

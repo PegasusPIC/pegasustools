@@ -18,7 +18,9 @@ class PegasusTrack:
 
     It stores all the header data into private variables that are accessible via getters
     and stores the data in a numpy structured array named 'data' with column names
-    identical to the column names in the file.
+    identical to the column names in the file. When loading an HDF5 file the `data`
+    member is instead an HDF5 dataset, it can be indexed the same as the numpy
+    structured array.
     """
 
     def __init__(
@@ -55,6 +57,7 @@ class PegasusTrack:
             Raised if the file extension does not match either `.hdf5` or `.track.dat`.
         """
         # Create the member variables
+        self.__hdf5_file: h5py.File | None = None
         self.__block_id: int
         self.__particle_id: int
         self.data: np.typing.ArrayLike
@@ -81,7 +84,11 @@ class PegasusTrack:
     def __load_from_hdf5(
         self, file_path: Path, block_id: int, particle_id: int
     ) -> None:
-        pass
+        with h5py.File(file_path, "r") as track_file:
+            dataset = track_file[f"{block_id}-{particle_id}"]
+            self.__block_id = dataset.attrs["block_id"]
+            self.__particle_id = dataset.attrs["particle_id"]
+            self.data = dataset[:]
 
     def __load_from_ascii(self, file_path: Path) -> None:
         """Load the track data from an ascii file at file_path.
