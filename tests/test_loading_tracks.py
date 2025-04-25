@@ -131,7 +131,8 @@ def test_collate_tracks_from_ascii() -> None:
         for particle_id in range(3):
             key = f"{block_id}-{particle_id}"
             fid_data[key] = generate_random_track_ascii(
-                source_directory / f"problem.0{particle_id}.0000{block_id}.track.dat"
+                source_directory / f"problem.0{particle_id}.0000{block_id}.track.dat",
+                generate_mu=True,
             )
 
     # Collate the test data
@@ -151,11 +152,18 @@ def test_collate_tracks_from_ascii() -> None:
             assert test.particle_id == particle_id
 
             for i, field in enumerate(test.data.dtype.names):
-                np.testing.assert_array_max_ulp(
-                    fid_data[key][2][:, i].astype(np.float32),
-                    test.data[field].astype(np.float32),
-                    maxulp=10,
-                )
+                if field == "mu":
+                    np.testing.assert_allclose(
+                        fid_data[key][2][:, i].astype(np.float32),
+                        test.data[field].astype(np.float32),
+                        rtol=0.03,
+                    )
+                else:
+                    np.testing.assert_array_max_ulp(
+                        fid_data[key][2][:, i].astype(np.float32),
+                        test.data[field].astype(np.float32),
+                        maxulp=10,
+                    )
 
 
 def test_collate_tracks_from_ascii_no_directory() -> None:
@@ -169,7 +177,7 @@ def test_collate_tracks_from_ascii_no_directory() -> None:
 
 
 def generate_random_track_ascii(
-    file_path: Path, seed: int | None = None
+    file_path: Path, seed: int | None = None, *, generate_mu: bool = False
 ) -> tuple[int, int, np.typing.NDArray[np.float32]]:
     """Generate a .track.dat ASCII file.
 
@@ -179,6 +187,8 @@ def generate_random_track_ascii(
         The path to write the file to
     seed : int | None, optional
         The seed for the PRNG, by default None
+    generate_mu: bool, optional
+        Compute the magnetic moment as well
 
     Returns
     -------
@@ -218,6 +228,28 @@ def generate_random_track_ascii(
 
         # Save the data
         np.savetxt(track_file, track_data_restarted, delimiter=" ", fmt="%-8.6e")
+
+    if generate_mu:
+        # Add the mu data
+
+        # specific velocities
+        specific_velocities = track_data[:, 3:6] - track_data[:, 12:15]
+
+        # Magnetic fields
+        magnetic_fields = track_data[:, 6:9]
+
+        velocities_sqr = (specific_velocities**2).sum(axis=1)
+        magnetic_magnitude = np.sqrt((magnetic_fields**2).sum(axis=1))
+
+        # specific field-parallel velocity
+        velocity_prl = (specific_velocities * magnetic_fields).sum(
+            axis=1
+        ) / magnetic_magnitude
+
+        # mu invariant
+        mu = 0.5 * (velocities_sqr - velocity_prl**2) / magnetic_magnitude
+
+        track_data = np.hstack((track_data, mu.reshape(len(mu), 1)))
 
     return (
         int(block_id),

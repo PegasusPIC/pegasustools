@@ -11,6 +11,7 @@ from typing import Any
 
 import h5py
 import numpy as np
+from numpy.lib import recfunctions as np_rfn
 
 
 class PegasusTrack:
@@ -152,6 +153,35 @@ class PegasusTrack:
         # Mask out the duplicated data
         self.data = self.data[mask]
 
+    def compute_magnetic_moment(self) -> None:
+        """Compute the magnetic moment & add it to `data` if it's not already there."""
+        # skip if it's already been computed
+        if "mu" in self.data.dtype.names:
+            return
+
+        # specific velocities
+        specific_velocities = np_rfn.structured_to_unstructured(
+            self.data[["v1", "v2", "v3"]]
+        ) - np_rfn.structured_to_unstructured(self.data[["U1", "U2", "U3"]])
+
+        # Magnetic fields
+        magnetic_fields = np_rfn.structured_to_unstructured(
+            self.data[["B1", "B2", "B3"]]
+        )
+
+        velocities_sqr = (specific_velocities**2).sum(axis=1)
+        magnetic_magnitude = np.sqrt((magnetic_fields**2).sum(axis=1))
+
+        # specific field-parallel velocity
+        velocity_prl = (specific_velocities * magnetic_fields).sum(
+            axis=1
+        ) / magnetic_magnitude
+
+        # mu invariant
+        mu = 0.5 * (velocities_sqr - velocity_prl**2) / magnetic_magnitude
+
+        self.data = np_rfn.append_fields(self.data, "mu", mu)
+
     @property
     def particle_id(self) -> int:
         """Get the particle ID.
@@ -266,6 +296,10 @@ def _parallel_ascii_collater(
     # Load the file into memory
     loaded_track = PegasusTrack(track_path)
 
+    # Add the magnetic moment to the data
+    loaded_track.compute_magnetic_moment()
+
+    # Make the dataset name
     dataset_name = f"{loaded_track.block_id}-{loaded_track.particle_id}"
 
     # Save the data to the HDF5 file
