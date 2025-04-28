@@ -28,7 +28,7 @@ jobs:
         with:
           python-version: "3.13"
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v6
       - name: Run PyLint
         run: uvx nox -s pylint -- --output-format=github
       - name: Run sp-repo-review
