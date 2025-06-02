@@ -35,7 +35,7 @@ def pylint(session: nox.Session) -> None:
 def tests(session: nox.Session) -> None:
     """Run the unit and regular tests."""
     session.install("-e.[test]")
-    session.run("pytest", "--cov=pegasustools", "--cov-branch", *session.posargs)
+    session.run("pytest", "--cov=../pegasustools", "--cov-branch", *session.posargs)
 
 
 @nox.session(reuse_venv=True)
