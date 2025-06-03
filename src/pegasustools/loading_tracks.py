@@ -317,7 +317,7 @@ def _parallel_ascii_collater(
 
 def _binary_get_column_names(
     num_columns: int,
-) -> tuple[tuple[str, ...], tuple[Any, ...]]:  # TODO: Refactor these tuples to be one
+) -> tuple[tuple[str, ...], tuple[Any, ...]]:
     # Determine which columns are in this dataset
     column_names = [
         "particle_id",
@@ -532,6 +532,17 @@ def _collect_particles_and_compute_delta_mu(
 def collate_tracks_from_binary(
     num_processes: int, source_dir: Path, destination_dir: Path
 ) -> None:
+    """Collate the .track_mpiio_optimized files in a directory into ordered files.
+
+    Parameters
+    ----------
+    num_processes : int
+        The number of processes to use.
+    source_dir : Path
+        The path to the directory with the .track_mpiio_optimized files
+    destination_dir : Path
+        The path with filename where the parquet files should be created.
+    """
     logger.info("Gathering list of .track_mpiio_optimized files.")
     # Get list of binary files
     files_to_read = sorted(source_dir.glob("*.track_mpiio_optimized"))
