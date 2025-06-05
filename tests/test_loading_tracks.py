@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 
 import numpy as np
+import polars as pl
 import pytest
 
 import pegasustools as pt
@@ -256,3 +257,143 @@ def generate_random_track_ascii(
         int(particle_id),
         track_data,
     )
+
+
+def generate_random_track_binary(  # noqa: PLR0915
+    file_path: Path,
+    num_columns: int,
+    seed: int | None = None,
+) -> pl.DataFrame:
+    """Generate a .track.dat ASCII file.
+
+    Parameters
+    ----------
+    file_path : Path
+        The path to write the file to
+    num_columns : int
+        The number of columns to write
+    seed : int | None, optional
+        The seed for the PRNG, by default None
+
+    Returns
+    -------
+    tuple[int, int, np.typing.NDArray[np.float32]]
+        The data written to the binary file.
+    """
+    # Setup PRNG
+    rng = np.random.default_rng(seed)
+
+    # Open file
+    with file_path.open("wb") as track_file:
+        # Write header
+        time = rng.uniform(0, 1000, 1)[0]
+        header = f"Particle track output function at time = {time}\n"
+        track_file.write(header.encode("ascii"))
+
+        # Generate random data
+        length = 1000
+        track_data = rng.uniform(-1, 10, num_columns * length)
+        track_data = track_data.reshape((length, num_columns))
+
+        # Modify the three id columns
+        track_data[:, 0] = np.floor(track_data[:, 0]) + 0.001
+        track_data[:, 1] = np.floor(track_data[:, 1]) + 0.001
+        track_data[:, 2] = np.floor(track_data[:, 2]) + 0.001
+
+        # Save the data
+        track_data.tofile(track_file)
+
+    # ===== Add the mu data =====
+
+    # Compute v, B, and U indices.
+    v_start = 7
+    b_start = 10
+    u_start = 16
+    match num_columns:
+        case 18 | 21:  # 1D
+            v_start = v_start - 2
+            b_start = b_start - 2
+            u_start = u_start - 2
+        case 19 | 22:  # 2D
+            v_start = v_start - 1
+            b_start = b_start - 1
+            u_start = u_start - 1
+        case 20 | 23:  # 3D
+            pass
+
+    # specific velocities
+    specific_velocities = (
+        track_data[:, v_start : v_start + 3] - track_data[:, u_start : u_start + 3]
+    )
+
+    # Magnetic fields
+    magnetic_fields = track_data[:, b_start : b_start + 3]
+
+    velocities_sqr = (specific_velocities**2).sum(axis=1)
+    magnetic_magnitude = np.sqrt((magnetic_fields**2).sum(axis=1))
+
+    # specific field-parallel velocity
+    velocity_prl = (specific_velocities * magnetic_fields).sum(
+        axis=1
+    ) / magnetic_magnitude
+
+    # mu invariant
+    mu = 0.5 * (velocities_sqr - velocity_prl**2) / magnetic_magnitude
+
+    track_data = np.hstack((track_data, mu.reshape(len(mu), 1)))
+
+    # ===== Convert to dataframe =====
+    int_t = pl.datatypes.Int64
+    float_t = pl.datatypes.Float64
+    column_schema = [
+        ("particle_id", int_t),
+        ("block_id", int_t),
+        ("species", int_t),
+        ("time", float_t),
+        ("x1", float_t),
+        ("x2", float_t),
+        ("x3", float_t),
+        ("v1", float_t),
+        ("v2", float_t),
+        ("v3", float_t),
+        ("B1", float_t),
+        ("B2", float_t),
+        ("B3", float_t),
+        ("E1", float_t),
+        ("E2", float_t),
+        ("E3", float_t),
+        ("U1", float_t),
+        ("U2", float_t),
+        ("U3", float_t),
+        ("dens", float_t),
+        ("forcing1", float_t),
+        ("forcing2", float_t),
+        ("forcing3", float_t),
+        ("mu", float_t),
+    ]
+
+    match num_columns:
+        case 18:  # 1D no forcing
+            column_schema.remove(("x2", float_t))
+            column_schema.remove(("x3", float_t))
+            column_schema.remove(("forcing1", float_t))
+            column_schema.remove(("forcing2", float_t))
+            column_schema.remove(("forcing3", float_t))
+        case 19:  # 2D no forcing
+            column_schema.remove(("x3", float_t))
+            column_schema.remove(("forcing1", float_t))
+            column_schema.remove(("forcing2", float_t))
+            column_schema.remove(("forcing3", float_t))
+        case 20:  # 3D no forcing
+            column_schema.remove(("forcing1", float_t))
+            column_schema.remove(("forcing2", float_t))
+            column_schema.remove(("forcing3", float_t))
+        case 21:  # 1D with forcing
+            column_schema.remove(("x2", float_t))
+            column_schema.remove(("x3", float_t))
+        case 22:  # 2D with forcing
+            column_schema.remove(("x3", float_t))
+        case 23:  # 3D with forcing
+            pass
+
+    return pl.from_numpy(track_data, schema=column_schema)
