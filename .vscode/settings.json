@@ -3,6 +3,14 @@
         "hynek",
         "Kunz",
         "pypa",
-        "testpypi"
+        "testpypi",
+        "wprl",
+        "wprp",
+        "dwprl",
+        "dwprp",
+        "edotv",
+        "nprp",
+        "vprpmax",
+        "vprlmax",
     ]
 }
