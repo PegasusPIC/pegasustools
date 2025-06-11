@@ -159,11 +159,7 @@ class PegasusTrack:
         self.data = self.data[mask]
 
     def compute_magnetic_moment(self) -> None:
-        """Compute the magnetic moment & add it to `data` if it's not already there."""
-        # skip if it's already been computed
-        if "mu" in self.data.dtype.names:
-            return
-
+        """Compute the magnetic moment & add it to `data`."""
         # specific velocities
         specific_velocities = np_rfn.structured_to_unstructured(
             self.data[["v1", "v2", "v3"]]
