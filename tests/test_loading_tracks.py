@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 import polars as pl
+import polars.testing
 import pytest
 
 import pegasustools as pt
@@ -22,9 +23,6 @@ def test_PegasusTrack_ASCII() -> None:
 
     # Load test data
     test = pt.PegasusTrack(file_path)
-
-    print(test.data.shape)
-    print(test.data[0])
 
     # Check correctness
     assert test.block_id == fid_block_id
@@ -175,6 +173,66 @@ def test_collate_tracks_from_ascii_no_directory() -> None:
     err_msg = f"{source_directory} is not a directory or does not exist."
     with pytest.raises(ValueError, match=re.escape(err_msg)):
         pt.collate_tracks_from_ascii(source_directory)
+
+
+def test_collate_tracks_from_binary() -> None:
+    """Test the collate_tracks_from_binary function."""
+    for num_columns in range(18, 24):
+        # Setup paths
+        source_directory = (
+            Path(__file__).parent.resolve() / "data" / "test_collate_tracks_from_binary"
+        )
+        parquet_directory = source_directory / "parquet"
+        source_directory.mkdir(exist_ok=True)
+        parquet_directory.mkdir(exist_ok=True)
+
+        # Generate test data
+        num_files = 3
+        fiducial_data = pl.concat(
+            [
+                generate_random_track_binary(
+                    source_directory / f"test_file_{i}.track_mpiio_optimized",
+                    num_columns=num_columns,
+                    seed=42 + i,
+                )
+                for i in range(num_files)
+            ]
+        )
+
+        # Compute global IDs
+        species_min = fiducial_data["species"].min()
+        n_species = len(fiducial_data["species"].unique())
+        n_particles = len(fiducial_data["particle_id"].unique())
+        fiducial_data = fiducial_data.with_columns(
+            particle_id=(pl.col("species") - species_min)
+            + (pl.col("particle_id") * n_species)
+            + (pl.col("block_id") * n_species * n_particles)
+        )
+        # Sort Test Data
+        fiducial_data = fiducial_data.sort(["particle_id", "time"])
+
+        # Compute delta mu
+        fiducial_data = fiducial_data.with_columns(
+            delta_mu_abs=pl.when(pl.col("particle_id") == pl.col("particle_id").shift())
+            .then((pl.col("mu") - pl.col("mu").shift()).abs())
+            .otherwise(None)
+        )
+
+        # Run the code to test
+        num_procs = min(num_files, 12)
+        pt.collate_tracks_from_binary(
+            num_processes=num_procs,
+            source_dir=source_directory,
+            destination_dir=parquet_directory,
+        )
+        test_data = pl.read_parquet(parquet_directory)
+
+        # Verify the results
+        polars.testing.assert_frame_equal(fiducial_data, test_data)
+
+        # Cleanup the files created
+        [f.unlink() for f in source_directory.glob("*.track_mpiio_optimized")]  # type: ignore[func-returns-value]
+        [f.unlink() for f in parquet_directory.glob("*.parquet")]  # type: ignore[func-returns-value]
 
 
 def generate_random_track_ascii(

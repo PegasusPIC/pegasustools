@@ -93,7 +93,6 @@ testpaths = [
 run.source = ["pegasustools"]
 run.omit = ["tests/*", "noxfile.py", "src/pegasustools/_version.py"]
 report.exclude_also = [
-  '\.\.\.',
   'if typing.TYPE_CHECKING:',
 ]
 

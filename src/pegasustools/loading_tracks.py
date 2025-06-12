@@ -426,7 +426,7 @@ def _binary_track_reader(input_file_path: Path, parquet_path: Path) -> pl.DataFr
     # Determine the size of each row
     abs_allowed_err = 5.0e-13
     int_to_float_offset = 0.001
-    for i in range(17, 25):
+    for i in range(17, 24):
         diff1 = np.abs((data[i] - np.floor(data[i])) - int_to_float_offset)
         diff2 = np.abs((data[i + 1] - np.floor(data[i + 1])) - int_to_float_offset)
 
