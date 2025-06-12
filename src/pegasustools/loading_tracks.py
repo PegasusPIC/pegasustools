@@ -313,76 +313,70 @@ def _parallel_ascii_collater(
 
 def _binary_get_column_names(
     num_columns: int,
-) -> tuple[tuple[str, ...], tuple[Any, ...]]:
+) -> tuple[tuple[str, Any], ...]:
     # Determine which columns are in this dataset
-    column_names = [
-        "particle_id",
-        "block_id",
-        "species",
-        "time",
-        "x1",
-        "x2",
-        "x3",
-        "v1",
-        "v2",
-        "v3",
-        "B1",
-        "B2",
-        "B3",
-        "E1",
-        "E2",
-        "E3",
-        "U1",
-        "U2",
-        "U3",
-        "dens",
-        "forcing1",
-        "forcing2",
-        "forcing3",
+    int_t = pl.datatypes.Int64
+    float_t = pl.datatypes.Float64
+    column_schema = [
+        ("particle_id", int_t),
+        ("block_id", int_t),
+        ("species", int_t),
+        ("time", float_t),
+        ("x1", float_t),
+        ("x2", float_t),
+        ("x3", float_t),
+        ("v1", float_t),
+        ("v2", float_t),
+        ("v3", float_t),
+        ("B1", float_t),
+        ("B2", float_t),
+        ("B3", float_t),
+        ("E1", float_t),
+        ("E2", float_t),
+        ("E3", float_t),
+        ("U1", float_t),
+        ("U2", float_t),
+        ("U3", float_t),
+        ("dens", float_t),
+        ("forcing1", float_t),
+        ("forcing2", float_t),
+        ("forcing3", float_t),
     ]
 
     match num_columns:
         case 18:  # 1D no forcing
-            column_names.remove("x2")
-            column_names.remove("x3")
-            column_names.remove("forcing1")
-            column_names.remove("forcing2")
-            column_names.remove("forcing3")
+            column_schema.remove(("x2", float_t))
+            column_schema.remove(("x3", float_t))
+            column_schema.remove(("forcing1", float_t))
+            column_schema.remove(("forcing2", float_t))
+            column_schema.remove(("forcing3", float_t))
         case 19:  # 2D no forcing
-            column_names.remove("x3")
-            column_names.remove("forcing1")
-            column_names.remove("forcing2")
-            column_names.remove("forcing3")
+            column_schema.remove(("x3", float_t))
+            column_schema.remove(("forcing1", float_t))
+            column_schema.remove(("forcing2", float_t))
+            column_schema.remove(("forcing3", float_t))
         case 20:  # 3D no forcing
-            column_names.remove("forcing1")
-            column_names.remove("forcing2")
-            column_names.remove("forcing3")
+            column_schema.remove(("forcing1", float_t))
+            column_schema.remove(("forcing2", float_t))
+            column_schema.remove(("forcing3", float_t))
         case 21:  # 1D with forcing
-            column_names.remove("x2")
-            column_names.remove("x3")
+            column_schema.remove(("x2", float_t))
+            column_schema.remove(("x3", float_t))
         case 22:  # 2D with forcing
-            column_names.remove("x3")
+            column_schema.remove(("x3", float_t))
         case 23:  # 3D with forcing
             pass
 
-    column_types = []
-    for name in column_names:
-        if name in ("particle_id", "block_id", "species"):
-            column_types.append(pl.datatypes.Int64)
-        else:
-            column_types.append(pl.datatypes.Float64)
-
-    return tuple(column_names), tuple(column_types)
+    return tuple(column_schema)
 
 
 def _compute_magnetic_moment(
     data: np.typing.ArrayLike,
-    column_names: tuple[str, ...],
-    column_types: tuple[Any, ...],
-) -> tuple[np.typing.ArrayLike, tuple[str, ...], tuple[Any, ...]]:
-    v_start = column_names.index("v1")
-    b_start = column_names.index("B1")
-    u_start = column_names.index("U1")
+    column_schema: tuple[tuple[str, Any], ...],
+) -> tuple[np.typing.ArrayLike, tuple[tuple[str, Any], ...]]:
+    v_start = column_schema.index(("v1", pl.datatypes.Float64))
+    b_start = column_schema.index(("B1", pl.datatypes.Float64))
+    u_start = column_schema.index(("U1", pl.datatypes.Float64))
 
     # specific velocities
     specific_velocities = (
@@ -408,10 +402,9 @@ def _compute_magnetic_moment(
     data = np.hstack((data, mu))
 
     # Expand the column nameds and schema to include mu
-    column_names = (*column_names, "mu")
-    column_types = (*column_types, pl.datatypes.Float64)
+    column_schema = (*column_schema, ("mu", pl.datatypes.Float64))
 
-    return data, column_names, column_types
+    return data, column_schema
 
 
 def _binary_track_reader(input_file_path: Path, parquet_path: Path) -> pl.DataFrame:
@@ -438,15 +431,12 @@ def _binary_track_reader(input_file_path: Path, parquet_path: Path) -> pl.DataFr
     data = data.reshape((data.shape[0] // num_columns, num_columns))
 
     # Get the list of column names
-    column_names, column_types = _binary_get_column_names(num_columns)
+    column_schema = _binary_get_column_names(num_columns)
 
     # Compute mu
-    data, column_names, column_types = _compute_magnetic_moment(
-        data, column_names, column_types
-    )
+    data, column_schema = _compute_magnetic_moment(data, column_schema)
 
     # Convert to dataframe
-    column_schema = tuple(zip(column_names, column_types, strict=True))
     output_df = pl.from_numpy(data, schema=column_schema)
 
     # Get mins and maxes
