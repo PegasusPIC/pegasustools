@@ -311,6 +311,9 @@ def _parallel_ascii_collater(
             dataset.attrs["particle_id"] = loaded_track.particle_id
 
 
+# =============================================================================
+# Collating function for binary .track_mpiio_optimized files
+# =============================================================================
 def _binary_get_column_names(
     num_columns: int,
 ) -> tuple[tuple[str, Any], ...]:
@@ -374,6 +377,21 @@ def _compute_magnetic_moment(
     data: np.typing.ArrayLike,
     column_schema: tuple[tuple[str, Any], ...],
 ) -> tuple[np.typing.ArrayLike, tuple[tuple[str, Any], ...]]:
+    """Compute the magnetic moment.
+
+    Parameters
+    ----------
+    data : np.typing.ArrayLike
+        The np array of data loaded from a track file
+    column_schema : tuple[tuple[str, Any], ...]
+        The schema of the columns. A tuple of tuples with each tuple containing the
+        column name and type.
+
+    Returns
+    -------
+    tuple[np.typing.ArrayLike, tuple[tuple[str, Any], ...]]
+        The new dataset with mu and the schema of the columns, now with an entry for mu.
+    """
     v_start = column_schema.index(("v1", pl.datatypes.Float64))
     b_start = column_schema.index(("B1", pl.datatypes.Float64))
     u_start = column_schema.index(("U1", pl.datatypes.Float64))
@@ -408,6 +426,22 @@ def _compute_magnetic_moment(
 
 
 def _binary_track_reader(input_file_path: Path, parquet_path: Path) -> pl.DataFrame:
+    """Convert binary track file to parquet file. Computes the magnetic moment too.
+
+    Parameters
+    ----------
+    input_file_path : Path
+        The path to the `.track_mpiio_optimized` file.
+    parquet_path : Path
+        The directory to write the parquet file to.
+
+    Returns
+    -------
+    pl.DataFrame
+        The species min & max and the particle_id max
+    """
+    logger.debug("Starting with file %s", input_file_path)
+
     # Open the file
     with input_file_path.open(mode="rb") as spec_file:
         # skip the header row
@@ -446,6 +480,8 @@ def _binary_track_reader(input_file_path: Path, parquet_path: Path) -> pl.DataFr
     # Write to disk
     output_df.write_parquet(parquet_path)
 
+    logger.debug("Finished with file %s", input_file_path)
+
     return pl.DataFrame(
         {
             "species_mins": mins["species"].item(),
@@ -458,6 +494,24 @@ def _binary_track_reader(input_file_path: Path, parquet_path: Path) -> pl.DataFr
 def _compute_global_ids(
     parquet_path: Path, species_min: int, species_max: int, particles_max: int
 ) -> pl.DataFrame:
+    """Compute a global particle ID based on the species, particle, and block IDs.
+
+    Parameters
+    ----------
+    parquet_path : Path
+        The path to the parquet file.
+    species_min : int
+        The minimum value in the species column.
+    species_max : int
+        The maximum value in the species column.
+    particles_max : int
+        The maximum value in the particle_id column.
+
+    Returns
+    -------
+    pl.DataFrame
+        The unique global IDs in this file.
+    """
     # Load the dataframe
     logger.debug("Starting %s", parquet_path)
     output_df = pl.read_parquet(parquet_path)
@@ -488,6 +542,23 @@ def _compute_global_ids(
 def _collect_particles_and_compute_delta_mu(
     parquet_paths: tuple[Path], chunk: tuple[int, int]
 ) -> None:
+    """Gather all data points for particles into single files and compute delta mu.
+
+    This function takes a list of parquet files and a range of particle IDs then finds
+    all the data for every particle in that range and collects it all into a single
+    file. It then sorts that data according to particle ID and time and computes the
+    change in mu at each time step. Results are written to new parquet files.
+
+    Parameters
+    ----------
+    parquet_paths : tuple[Path]
+        The paths to the parquet files
+    chunk : tuple[int, int]
+        The IDs of the particles to collect. The first element is the low limit and the
+        second element is the upper limit, both inclusive.
+    """
+    logger.debug("Starting with particle range %i-%i", chunk[0], chunk[1])
+
     # Filter to find all the particles in the chunk
     selections = [
         pl.scan_parquet(pq_path).filter(
@@ -514,6 +585,8 @@ def _collect_particles_and_compute_delta_mu(
     ) + f"_particles_{chunk[0]}_{chunk[1]}.parquet"
     full_set.write_parquet(parquet_paths[0].parent / output_name)
 
+    logger.debug("Finished with particle range %i-%i", chunk[0], chunk[1])
+
 
 def collate_tracks_from_binary(
     num_processes: int, source_dir: Path, destination_dir: Path
@@ -527,7 +600,8 @@ def collate_tracks_from_binary(
     source_dir : Path
         The path to the directory with the .track_mpiio_optimized files
     destination_dir : Path
-        The path with filename where the parquet files should be created.
+        The path with filename where the parquet files should be created, must be an
+        empty directory.
     """
     logger.info("Gathering list of .track_mpiio_optimized files.")
     # Get list of binary files
