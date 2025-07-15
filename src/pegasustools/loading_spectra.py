@@ -163,7 +163,7 @@ class PegasusSpectralData:
         and perpendicular averaged spectrum. Depends on `max_w_prp`, `max_w_prl`,
         `n_prp`, `n_prl`, and `v_prp_max` being set correctly.
         """
-        summed_spectra = self.data.sum(axis=(0,2))
+        summed_spectra = self.data.sum(axis=0)
 
         # v_prl array goes from [-vprlmax to vprlmax]
         dv_prl = 2.0 * self.__max_w_prl / self.__n_prl
@@ -175,7 +175,8 @@ class PegasusSpectralData:
         # Note: this is not the correct normalization for edotv outputs (edotv should be
         # normalized relative to f, not itself)
         data_avg = summed_spectra / norm
-        v_prp = np.linspace(0, self.__v_prp_max, self.__n_prp)
+        half_bin = (self.__v_prp_max / self.__n_prp) / 2
+        v_prp = np.linspace(0 + half_bin, self.__v_prp_max + half_bin, self.__n_prp)
 
         self.spectra_prl = data_avg.sum(axis=0) * dv_prp
-        self.spectra_prp = 0.5 * (data_avg / v_prp).sum(axis=1) * dv_prl
+        self.spectra_prp = 0.5 * (data_avg.sum(axis=1) / v_prp) * dv_prl
