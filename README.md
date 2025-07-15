@@ -49,7 +49,14 @@ If you wish to contribute please review the contribution guide in
 pull requests. I recommend you fork this repo, make your changes, then submit a
 PR from your feature branch.
 
-## Citations
+## Citation
+
+If `PegasusTools` has been significant to a project that leads to an academic
+publication, please acknowledge our work by citing it using the information in
+the included citation.cff file; citations in APA or BibTex format can be found
+in the "About" section of the GitHub repository.
+
+## Bibliography
 
 - [M. W. Kunz, J. M. Stone, X.-N. Bai, 2014, JCoP, 259, 154 \
   _Pegasus: A new hybrid-kinetic particle-in-cell code for astrophysical plasma dynamics_](https://ui.adsabs.harvard.edu/abs/2014JCoPh.259..154K/abstract)
