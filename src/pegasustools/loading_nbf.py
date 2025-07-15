@@ -11,6 +11,8 @@ from typing import BinaryIO
 
 import numpy as np
 
+from .pt_logging import setup_pt_logger
+
 
 class PegasusNBFData:
     """Holds all the data loaded when loading a NBF file.
@@ -81,6 +83,20 @@ class PegasusNBFData:
         for key in self.data:
             self.data[key] = np.swapaxes(self.data[key], 0, 2)
             self.data[key] = np.squeeze(self.data[key])
+
+        # Log the metadata from the NBF file
+        logger = setup_pt_logger()
+        message = (
+            "Metadata for loaded NBF file\n"
+            f"Path              = {file_path}:\n"
+            f"time              = {self.time}\n"
+            f"big_endian        = {self.big_endian}\n"
+            f"num_meshblocks    = {self.num_meshblocks}\n"
+            f"list_of_variables = {self.list_of_variables}\n"
+            f"mesh_params       = {self.mesh_params}\n"
+            f"meshblock_params  = {self.meshblock_params}\n"
+        )
+        logger.info(message)
 
     def __load_nbf_header(self, nbf_file: BinaryIO) -> None:
         # Load the header lines and verify it's an NBF file
