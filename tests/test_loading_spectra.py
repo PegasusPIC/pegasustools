@@ -78,15 +78,29 @@ def test_PegasusSpectralData_average_spectra() -> None:
     test.average_spectra()
 
     # Compute the fiducial version
-    summed_spectra = fiducial_data.sum(axis=0)
-    norm = summed_spectra.sum()
-
     n_prp = 200
+    n_prl = 400
     max_w_prp = 4.0
     max_w_prl = 4.0
+    v_prp_max = 4.0
 
-    spectra_prl = summed_spectra.sum(axis=0) / norm / (max_w_prl / n_prp)
-    spectra_prp = summed_spectra.sum(axis=1) / norm / (max_w_prp / n_prp)
+    summed_spectra = fiducial_data.sum(axis=0)
+
+    # v_prl array goes from [-vprlmax to vprlmax]
+    dv_prl = 2.0 * max_w_prl / n_prl
+    # v_prp array goes from [0 to vprpmax]
+    dv_prp = max_w_prp / n_prp
+    norm = summed_spectra.sum() * dv_prl * dv_prp
+
+    # normalized, averaged f(wprl,wprp) such that int(f(wprl,wprp) dwprl dwprp) = 1
+    # Note: this is not the correct normalization for edotv outputs (edotv should be
+    # normalized relative to f, not itself)
+    data_avg = summed_spectra / norm
+    half_bin = (v_prp_max / n_prp) / 2
+    v_prp = np.linspace(0 + half_bin, v_prp_max + half_bin, n_prp)
+
+    spectra_prl = data_avg.sum(axis=0) * dv_prp
+    spectra_prp = 0.5 * (data_avg.sum(axis=1) / v_prp) * dv_prl
 
     # Verify the results
     assert test.spectra_prp.shape == (200,)
