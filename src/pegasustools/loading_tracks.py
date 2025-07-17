@@ -1,8 +1,4 @@
-"""Provides the utilities required to deal with particle track data.
-
-This module provides:
-- PegasusTrack: A class for holding track data from particles
-"""
+"""Provides the utilities required to deal with particle track data."""
 
 import concurrent.futures
 import multiprocessing
