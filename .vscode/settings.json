@@ -6,5 +6,8 @@
         "pypa",
         "testpypi",
         "unconcat"
-    ]
+    ],
+    "files.exclude": {
+        "**/old_scripts": true
+    }
 }
