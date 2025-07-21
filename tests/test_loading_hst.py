@@ -26,8 +26,16 @@ def test_load_hst_file() -> None:
         hst_file.write("# Athena++ history data\n")
         hst_file.write(column_header)
 
-        prng = np.random.default_rng()
+        # generate random data
+        seed = 42
+        prng = np.random.default_rng(seed)
         hst_arr = prng.uniform(-1, 1, (1000, 16)).astype(np.float32)
+
+        # sort so that the time entries are monotonically increasing
+        sort_idxs = np.argsort(hst_arr[:, 0])
+        hst_arr = hst_arr[sort_idxs]
+
+        # Save to an ASCII file
         np.savetxt(hst_file, hst_arr, delimiter=" ", fmt="% 6.5e")
 
     # Convert to dataframe

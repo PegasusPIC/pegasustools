@@ -13,6 +13,23 @@ import polars as pl
 from .pt_logging import setup_pt_logger
 
 
+def _remove_restart_overlaps(
+    overlapped_arr: np.typing.ArrayLike, time_idx: int
+) -> np.typing.ArrayLike:
+    mask = np.ones(overlapped_arr.shape[0], dtype="bool")
+    # Generate the mask by iterating through the time array backwards and only choosing
+    # rows that monotonically decrease in time
+    current_min_time = np.inf
+    for i, time in reversed(list(enumerate(overlapped_arr[:, time_idx]))):
+        if time < current_min_time:
+            current_min_time = time
+        else:
+            mask[i] = False
+
+    # Mask out the overlapping data
+    return overlapped_arr[mask]
+
+
 def _ascii_track_reader(file_path: Path, particle_id_max: int) -> pl.DataFrame:
     """Load the track data from an ascii file at file_path.
 
@@ -59,19 +76,8 @@ def _ascii_track_reader(file_path: Path, particle_id_max: int) -> pl.DataFrame:
         data = np.loadtxt(track_file, dtype=np.float32)
 
     # ===== Look for restarts and remove the duplicated data via masking =====
-    # Find the indices of the restart times. The +1 shifts from the end of the
-    # old data to the beginning of the restart which is what we actually want
     time_idx = column_schema.index(("time", pl.datatypes.Float32))
-    restart_indices = np.flatnonzero(data[1:, time_idx] <= data[:-1, time_idx]) + 1
-
-    # Generate the mask
-    mask = np.ones(data.shape[0], dtype="bool")
-    for end_idx in restart_indices:
-        start_idx = np.flatnonzero(data[:, time_idx] == data[end_idx, time_idx])[0]
-        mask[start_idx:end_idx] = False
-
-    # Mask out the duplicated data
-    data = data[mask]
+    data = _remove_restart_overlaps(data, time_idx)
 
     # ===== Compute mu, convert to dataframe, and compute delta mu =====
     # Compute mu

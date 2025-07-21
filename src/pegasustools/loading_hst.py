@@ -5,9 +5,14 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 
+from .loading_tracks import _remove_restart_overlaps
+
 
 def load_hst_file(hst_path: Path) -> pl.DataFrame:
     r"""Load the contents of a .hst files as a Polars dataframe.
+
+    Automatically corrects for any overlap due to restarts by only accepting the
+    newest/latest data.
 
     Parameters
     ----------
@@ -35,7 +40,7 @@ def load_hst_file(hst_path: Path) -> pl.DataFrame:
         header = next(hst_file)
 
     # Verify title
-    if title != "# Athena++ history data\n":
+    if title not in ["# Athena++ history data\n", "# Pegasus++ history data\n"]:
         msg = (
             f"The file at {hst_path} does not have the correct header to be a hst file."
         )
@@ -46,6 +51,10 @@ def load_hst_file(hst_path: Path) -> pl.DataFrame:
 
     # ===== Load data =====
     hst_arr = np.loadtxt(hst_path, dtype=np.float32)
+
+    # ===== Look for restarts and remove the duplicated data via masking =====
+    time_idx = column_names.index("time")
+    hst_arr = _remove_restart_overlaps(hst_arr, time_idx)
 
     # ===== Convert to Polars dataframe =====
     return pl.from_numpy(hst_arr, column_names)
