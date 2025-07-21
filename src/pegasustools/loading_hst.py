@@ -35,7 +35,7 @@ def load_hst_file(hst_path: Path) -> pl.DataFrame:
         header = next(hst_file)
 
     # Verify title
-    if title != "# Athena++ history data\n":
+    if title not in ["# Athena++ history data\n", "# Pegasus++ history data\n"]:
         msg = (
             f"The file at {hst_path} does not have the correct header to be a hst file."
         )
