@@ -27,7 +27,8 @@ def test_load_hst_file() -> None:
         hst_file.write(column_header)
 
         # generate random data
-        prng = np.random.default_rng()
+        seed = 42
+        prng = np.random.default_rng(seed)
         hst_arr = prng.uniform(-1, 1, (1000, 16)).astype(np.float32)
 
         # sort so that the time entries are monotonically increasing
