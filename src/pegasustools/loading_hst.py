@@ -11,6 +11,9 @@ from .loading_tracks import _remove_restart_overlaps
 def load_hst_file(hst_path: Path) -> pl.DataFrame:
     r"""Load the contents of a .hst files as a Polars dataframe.
 
+    Automatically corrects for any overlap due to restarts by only accepting the
+    newest/latest data.
+
     Parameters
     ----------
     hst_path : Path
