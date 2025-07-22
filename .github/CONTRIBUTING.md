@@ -28,6 +28,24 @@ $ nox -s build  # Make an SDist and wheel
 Nox handles everything for you, including setting up an temporary virtual
 environment for each run.
 
+# Adding Something New
+
+Adding a new function/class/etc is reasonably simple.
+
+1. Either create a new file in `src/pegasustools` or open an existing file.
+2. Add the new function/class/etc to the file.
+3. Open `src/pegasustools/__init__.py`, import the new function/class/etc and
+   add it to the `__all__` variable, see the existing examples in the
+   `__init__.py` file for details.
+4. Write tests for your new code
+5. Write documentation for you new code. Documentation is in the `docs`
+   directory, see the existing contents of that directory for how to do it.
+6. Run the linters and tests using Nox
+7. Create a Pull Request (PR) in GitHub
+8. Once the PR is merged you can trigger a new release/version by creating a new
+   release on GitHub, the GitHub actions will take care of packaging and
+   releasing your code.
+
 # Setting up a development environment manually
 
 You can set up a development environment by running:
@@ -66,14 +84,6 @@ Use pytest to run the unit checks:
 
 ```bash
 pytest
-```
-
-# Coverage
-
-Use pytest-cov to generate coverage reports:
-
-```bash
-pytest --cov=pegasustools
 ```
 
 # Building docs
