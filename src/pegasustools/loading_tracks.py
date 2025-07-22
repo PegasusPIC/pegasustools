@@ -132,7 +132,8 @@ def collate_tracks_from_ascii(
     source_dir : Path
         The path to the directory with the .track.dat files
     destination_dir : Path
-        The path with filename where the parquet files should be created.
+        The path with filename where the parquet files should be created. It will be
+        created if it doesn't exist.
     max_parquet_size : int, optional
         The maximum parquet file size in MB. This is only approximate and the actual
         file size might be smaller to help with load balancing. By default 2000MB
@@ -149,6 +150,9 @@ def collate_tracks_from_ascii(
         msg = f"No .track.dat files found in {source_dir}"
         raise FileNotFoundError(msg)
     logger.info("Found %i .track.dat files.", len(files_to_read))
+
+    # Create destination directory if it doesn't already exist
+    destination_dir.mkdir(parents=True, exist_ok=True)
 
     # Find the maximum particle ID
     particle_id_max = -999
@@ -575,8 +579,8 @@ def collate_tracks_from_binary(
     source_dir : Path
         The path to the directory with the .track_mpiio_optimized files
     destination_dir : Path
-        The path with filename where the parquet files should be created, must be an
-        empty directory.
+        The path with filename where the parquet files should be created. It will be
+        created if it doesn't exist.
     restart_collect : bool, optional
        Only run the final collection stage. Intended to be used to restart if the
        collection step fails due to running out of memory, by default False
@@ -587,6 +591,9 @@ def collate_tracks_from_binary(
     # Get list of binary files
     logger.info("Gathering list of .track_mpiio_optimized files.")
     files_to_read = sorted(source_dir.glob("*.track_mpiio_optimized"))
+
+    # Create destination directory if it doesn't already exist
+    destination_dir.mkdir(parents=True, exist_ok=True)
 
     # Make a tuple of the parquet files that will be generated
     parquet_paths = tuple(
