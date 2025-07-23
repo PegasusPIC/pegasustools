@@ -139,19 +139,3 @@ class PegasusSpectralData:
             The value of max_w_prl
         """
         return self.__max_w_prl
-
-    def average_spectra(self) -> None:
-        """Average the spectra.
-
-        Creates two new member variables, spectra_prl and spectra_prp, with the parallel
-        and perpendicular averaged spectrum.
-        """
-        summed_spectra = self.data.sum(axis=0)
-        norm = summed_spectra.sum()
-
-        self.spectra_prl = (
-            summed_spectra.sum(axis=0) / norm / (self.__max_w_prl / self.__n_prp)
-        )
-        self.spectra_prp = (
-            summed_spectra.sum(axis=1) / norm / (self.__max_w_prp / self.__n_prp)
-        )
