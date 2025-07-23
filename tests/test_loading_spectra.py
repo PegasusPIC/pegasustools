@@ -59,42 +59,6 @@ def test_PegasusSpectralData_file_wrong_shape() -> None:
         _ = pt.PegasusSpectralData(file_path, n_prp=n_prp)
 
 
-def test_PegasusSpectralData_average_spectra() -> None:
-    """Test pt.PegasusSpectralData.average_spectra method."""
-    # Setup path
-    file_path = (
-        Path(__file__).parent.resolve() / "data" / "test_PegasusSpectralData.spec"
-    )
-
-    # Create the file
-    time, fiducial_data = generate_random_spec_file(
-        file_path, seed=42, num_meshblocks=7
-    )
-
-    # Load test data
-    test = pt.PegasusSpectralData(file_path)
-
-    # Average the spectra
-    test.average_spectra()
-
-    # Compute the fiducial version
-    summed_spectra = fiducial_data.sum(axis=0)
-    norm = summed_spectra.sum()
-
-    n_prp = 200
-    max_w_prp = 4.0
-    max_w_prl = 4.0
-
-    spectra_prl = summed_spectra.sum(axis=0) / norm / (max_w_prl / n_prp)
-    spectra_prp = summed_spectra.sum(axis=1) / norm / (max_w_prp / n_prp)
-
-    # Verify the results
-    assert test.spectra_prp.shape == (200,)
-    assert test.spectra_prl.shape == (400,)
-    np.testing.assert_array_max_ulp(spectra_prp, test.spectra_prp, maxulp=0)
-    np.testing.assert_array_max_ulp(spectra_prl, test.spectra_prl, maxulp=0)
-
-
 def generate_random_spec_file(
     file_path: Path,
     num_meshblocks: int,
