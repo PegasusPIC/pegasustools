@@ -11,6 +11,7 @@ from pegasustools.loading_tracks import (
     collate_tracks_from_ascii,
     collate_tracks_from_binary,
 )
+from pegasustools.mpl_setup import _register_hawley_colormap
 from pegasustools.pt_logging import setup_pt_logger
 
 # Set version
@@ -26,3 +27,6 @@ __all__ = [
     "load_hst_file",
     "setup_pt_logger",
 ]
+
+# Create and register the hawley colormap
+_register_hawley_colormap()
