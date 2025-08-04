@@ -96,7 +96,7 @@ jobs:
           subject-path: "dist/*"
 
       - name: Upload to PyPI
-        uses: pypa/gh-action-pypi-publish@e9ccbe5a211ba3e8363f472cae362b56b104e796
+        uses: pypa/gh-action-pypi-publish@release/v1
 
       - name: Test install from PyPI
         run: |
