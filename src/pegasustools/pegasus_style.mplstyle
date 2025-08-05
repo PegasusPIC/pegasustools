@@ -34,6 +34,9 @@ font.weight: normal
 # ===== Colors =====
 image.cmap: hawley
 
+# ===== Image =====
+image.interpolation: none
+
 # ===== Axes =====
 # axes.linewidth: 0.5
 # axes.labelsize: 8
