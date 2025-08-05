@@ -31,6 +31,9 @@ savefig.transparent: True
 font.family: serif
 font.weight: normal
 
+# ===== Colors =====
+image.cmap: hawley
+
 # ===== Axes =====
 # axes.linewidth: 0.5
 # axes.labelsize: 8
