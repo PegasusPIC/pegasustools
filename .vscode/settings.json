@@ -5,6 +5,7 @@
         "hynek",
         "Kunz",
         "mpiio",
+        "mplstyle",
         "pypa",
         "siunitx",
         "svgnames",

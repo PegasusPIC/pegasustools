@@ -73,7 +73,7 @@ always_document_param_types = True
 nbsphinx_execute = "always"
 
 nbsphinx_execute_arguments = [
-    "--InlineBackend.figure_formats={'png2x'}",
+    "--InlineBackend.figure_formats={'svg'}",
     "--InlineBackend.rc=figure.dpi=96",
 ]
 

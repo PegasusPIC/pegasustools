@@ -6,6 +6,7 @@
 :caption: Documentation
 
 reading_pegasus_files.ipynb
+plotting.ipynb
 api/pegasustools
 ```
 
