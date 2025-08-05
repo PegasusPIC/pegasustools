@@ -1,13 +1,16 @@
 {
     "cSpell.words": [
+        "amsmath",
+        "dvipsnames",
         "hynek",
         "Kunz",
         "mpiio",
+        "mplstyle",
         "pypa",
+        "siunitx",
+        "svgnames",
         "testpypi",
-        "unconcat"
-    ],
-    "files.exclude": {
-        "**/old_scripts": true
-    }
+        "unconcat",
+        "xcolor"
+    ]
 }
