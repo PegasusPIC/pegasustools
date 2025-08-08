@@ -226,7 +226,7 @@ class PegasusNBFData:
         Returns
         -------
         int
-            The number of mesh blocks in the NBF file
+            The number of mesh blocks in the NBF file.
         """
         return self.__num_meshblocks
 
@@ -237,7 +237,7 @@ class PegasusNBFData:
         Returns
         -------
         int
-            The number of variables/fields in the NBF file
+            The number of variables/fields in the NBF file.
         """
         return len(self.__list_of_variables)
 
