@@ -1,4 +1,4 @@
-# PegasusTools
+# [PegasusTools](https://github.com/PegasusPIC/pegasustools)
 
 [![Actions Status][actions-badge]][actions-link]
 [![pre-commit.ci status][pre-commit-badge]][pre-commit-link]
