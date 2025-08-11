@@ -1,4 +1,4 @@
-# [PegasusTools](https://github.com/PegasusPIC/pegasustools)
+# PegasusTools
 
 [![Actions Status][actions-badge]][actions-link]
 [![pre-commit.ci status][pre-commit-badge]][pre-commit-link]
@@ -31,12 +31,12 @@
 
 ## Summary
 
-PegasusTools is an analysis package for the Pegasus++ Particle-In-Cell (PIC)
-code. It can be easily installed with `pip install pegasustools` or
-`uv pip install pegasustools`. The documentation for the latest stable version
-can be found [here](https://pegasustools.readthedocs.io/en/stable/). Once
-installed it can be imported directly into any Python program via
-`import pegasustools as pt`
+[PegasusTools](https://github.com/PegasusPIC/pegasustools) is an analysis
+package for the Pegasus++ Particle-In-Cell (PIC) code. It can be easily
+installed with `pip install pegasustools` or `uv pip install pegasustools`. The
+documentation for the latest stable version can be found
+[here](https://pegasustools.readthedocs.io/en/stable/). Once installed it can be
+imported directly into any Python program via `import pegasustools as pt`
 
 ## Found a Bug or Have a Feature Request?
 
