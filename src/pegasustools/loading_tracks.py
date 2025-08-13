@@ -54,8 +54,6 @@ def _ascii_track_reader(file_path: Path, particle_id_max: int) -> pl.DataFrame:
             "track",
             "data",
             "for",
-            "particle",
-            "with",
         ]
         if header[:7] != fiducial_header_start:
             logger.critical(
