@@ -40,6 +40,7 @@ def tests(session: nox.Session) -> None:
         "--cov=../pegasustools",
         "--cov-branch",
         "--cov-report=html",
+        "--capture=no",
         *session.posargs,
     )
 
