@@ -32,13 +32,21 @@ class PegasusSpectralData:
         file_path : Path
             The file path to the file to load
         n_prp : int, optional
-            The value of n_prp used in the peginput file, by default 200
+            The value of n_prp used in the peginput file, by default 200. This argument
+            is ignored if the spectra file is in the new format that contains this
+            information in the header.
         n_prl : int, optional
-            The value of n_prl used in the peginput file, by default 400
+            The value of n_prl used in the peginput file, by default 400. This argument
+            is ignored if the spectra file is in the new format that contains this
+            information in the header.
         max_w_prp : float, optional
-            The value of max_w_prp used in the peginput file, by default 4.0
+            The value of max_w_prp used in the peginput file, by default 4.0. This
+            argument is ignored if the spectra file is in the new format that contains
+            this information in the header.
         max_w_prl : float, optional
-            The value of max_w_prl used in the peginput file, by default 4.0
+            The value of max_w_prl used in the peginput file, by default 4.0. This
+            argument is ignored if the spectra file is in the new format that contains
+            this information in the header.
 
         Raises
         ------
