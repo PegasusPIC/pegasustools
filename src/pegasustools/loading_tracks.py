@@ -55,7 +55,7 @@ def _ascii_track_reader(file_path: Path, particle_id_max: int) -> pl.DataFrame:
             "data",
             "for",
         ]
-        if header[:7] != fiducial_header_start:
+        if header[:5] != fiducial_header_start:
             logger.critical(
                 "The file at %s is not a Pegasus++ .track.dat file.", str(file_path)
             )
