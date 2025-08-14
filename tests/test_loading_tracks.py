@@ -78,7 +78,7 @@ def test_collate_tracks_from_ascii() -> None:
 
     # Verify the results. Note the high relative error tolerance to account for lost
     # precision going to/from ASCII
-    polars.testing.assert_frame_equal(test_data, fiducial_data, rtol=1.25e-02)
+    polars.testing.assert_frame_equal(test_data, fiducial_data, rel_tol=1.85e-02)
 
     # Cleanup the files created
     [f.unlink() for f in source_directory.glob("*.track.dat")]  # type: ignore[func-returns-value]

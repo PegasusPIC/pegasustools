@@ -53,11 +53,38 @@ class PegasusSpectralData:
         self.__max_w_prl: float = max_w_prl
         self.spectra_prp: np.typing.NDArray[np.float64]
         self.spectra_prl: np.typing.NDArray[np.float64]
+
         # Open the file
         with file_path.open(mode="rb") as spec_file:
-            # Load header variable
+            # Load the header
             header = spec_file.readline().decode("ascii")
+            second_line_loc = spec_file.tell()
             self.__time: np.float64 = np.float64(header.split()[-1])
+
+            # Check if this is the new spectra format with the complete header
+            n_prl_line_bytes = spec_file.readline()
+
+            # Check if line_2 is binary or part of the header
+            is_ascii = True
+            try:
+                n_prl_line = n_prl_line_bytes.decode("ascii")
+            except UnicodeDecodeError:
+                is_ascii = False
+
+            if is_ascii and "Histogram size in wprl = " in n_prl_line:
+                # Now we need to decode the contents of the new header
+                self.__n_prl = int(n_prl_line.rstrip().split(" ")[-1])
+                self.__n_prp = int(
+                    spec_file.readline().decode("ascii").rstrip().split(" ")[-1]
+                )
+                self.__max_w_prl = float(
+                    spec_file.readline().decode("ascii").rstrip().split(" ")[-1]
+                )
+                self.__max_w_prp = float(
+                    spec_file.readline().decode("ascii").rstrip().split(" ")[-1]
+                )
+            else:
+                spec_file.seek(second_line_loc)
 
             # Load the entire remaining file
             self.data = np.fromfile(spec_file, dtype=np.float64)
