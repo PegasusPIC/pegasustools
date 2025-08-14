@@ -16,23 +16,27 @@ def test_PegasusSpectralData_init() -> None:
         Path(__file__).parent.resolve() / "data" / "test_PegasusSpectralData.spec"
     )
 
-    # Create the file
-    time, fiducial_data = generate_random_spec_file(
-        file_path, seed=42, num_meshblocks=7
-    )
+    for header_type in (True, False):
+        # Create the file
+        time, fiducial_data = generate_random_spec_file(
+            file_path,
+            seed=42,
+            num_meshblocks=7,
+            new_header=header_type,
+        )
 
-    # Load test data
-    test = pt.PegasusSpectralData(file_path)
+        # Load test data
+        test = pt.PegasusSpectralData(file_path)
 
-    # Verify the metadata
-    assert time == test.time
-    assert test.n_prp == 200
-    assert test.n_prl == 400
-    assert test.max_w_prp == 4.0
-    assert test.max_w_prl == 4.0
+        # Verify the metadata
+        assert time == test.time
+        assert test.n_prp == 200
+        assert test.n_prl == 400
+        assert test.max_w_prp == 4.0
+        assert test.max_w_prl == 4.0
 
-    # Verify the spectra
-    np.testing.assert_array_max_ulp(fiducial_data, test.data, maxulp=0)
+        # Verify the spectra
+        np.testing.assert_array_max_ulp(fiducial_data, test.data, maxulp=0)
 
 
 def test_PegasusSpectralData_file_wrong_shape() -> None:
@@ -65,6 +69,8 @@ def generate_random_spec_file(
     seed: int | None = None,
     num_parallel: int = 400,
     num_perpendicular: int = 200,
+    *,
+    new_header: bool = False,
 ) -> tuple[float, np.typing.NDArray[np.float64]]:
     """Write a .spec file with random data for testing.
 
@@ -80,6 +86,9 @@ def generate_random_spec_file(
         n_prl from the peginput file, by default 400
     num_perpendicular : int, optional
         n_prp from the peginput file, by default 200
+    new_header: bool, optional
+        Whether to use the old header or the new header that includes n_prp, n_prl,
+        w_prp_max, w_prl_max.
 
     Returns
     -------
@@ -96,6 +105,15 @@ def generate_random_spec_file(
         spec_file.write(
             (f"Particle distribution function at time = {time}\n").encode("ascii")
         )
+        if new_header:
+            spec_file.write(
+                f"Histogram size in wprl = {num_parallel}\n".encode("ascii")
+            )
+            spec_file.write(
+                f"Histogram size in wprp = {num_perpendicular}\n".encode("ascii")
+            )
+            spec_file.write("Max value of wprl/vth0 = 4\n".encode("ascii"))
+            spec_file.write("Max value of wprp/vth0 = 4\n".encode("ascii"))
 
         # Generate random data
         header_size = 6
