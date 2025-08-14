@@ -212,7 +212,7 @@ def collate_tracks_from_ascii(
 # =============================================================================
 # Collating function for binary .track_mpiio_optimized files
 # =============================================================================
-def _binary_get_column_names(
+def _binary_get_column_names_missing_header(
     num_columns: int,
 ) -> tuple[tuple[str, Any], ...]:
     # Determine which columns are in this dataset
@@ -269,6 +269,32 @@ def _binary_get_column_names(
             pass
 
     return tuple(column_schema)
+
+
+def _binary_get_column_names_included_header(
+    line_2: str, line_3: str
+) -> tuple[int, tuple[tuple[str, Any], ...]]:
+    # Get the number of columns
+    num_columns = int(line_2.rstrip().split()[-1])
+
+    # Get the names of the columns
+    column_names = line_3.rstrip().split()[1:]
+
+    # Build the schema
+    int_t = pl.datatypes.Int64
+    float_t = pl.datatypes.Float64
+
+    # The datasets that have type int instead of float
+    int_datasets = ("particle_id", "block_id", "species")
+
+    column_schema = []
+    for name in column_names:
+        if name in int_datasets:
+            column_schema.append((name, int_t))
+        else:
+            column_schema.append((name, float_t))
+
+    return num_columns, tuple(column_schema)
 
 
 def _compute_magnetic_moment(
@@ -329,6 +355,26 @@ def _compute_magnetic_moment(
     return data, column_schema
 
 
+def _estimate_num_rows(
+    data: np.typing.ArrayLike,
+) -> tuple[int, tuple[tuple[str, Any], ...]]:
+    # Determine the size of each row
+    abs_allowed_err = 5.0e-13
+    int_to_float_offset = 0.001
+    for i in range(17, 24):
+        diff1 = np.abs((data[i] - np.floor(data[i])) - int_to_float_offset)
+        diff2 = np.abs((data[i + 1] - np.floor(data[i + 1])) - int_to_float_offset)
+
+        if diff1 < abs_allowed_err and diff2 < abs_allowed_err:
+            num_columns = i
+            break
+
+    # Get the list of column names
+    column_schema = _binary_get_column_names_missing_header(num_columns)
+
+    return num_columns, column_schema
+
+
 def _binary_track_reader(input_file_path: Path, parquet_path: Path) -> pl.DataFrame:
     """Convert binary track file to parquet file. Computes the magnetic moment too.
 
@@ -348,30 +394,44 @@ def _binary_track_reader(input_file_path: Path, parquet_path: Path) -> pl.DataFr
     logger.debug("Starting with file %s", input_file_path)
 
     # Open the file
-    with input_file_path.open(mode="rb") as spec_file:
-        # skip the header row
-        _ = spec_file.readline()
+    with input_file_path.open(mode="rb") as track_file:
+        # first read the header, accounting for the two different possible versions
+        _ = track_file.readline()
+        line_2_bytes = track_file.readline()
 
-        # Load the entire remaining file
-        data = np.fromfile(spec_file, dtype=np.float64)
+        # Check if line_2 is binary or part of the header
+        is_ascii = True
+        try:
+            line_2 = line_2_bytes.decode("ascii")
+        except UnicodeDecodeError:
+            is_ascii = False
 
-    # Determine the size of each row
-    abs_allowed_err = 5.0e-13
-    int_to_float_offset = 0.001
-    for i in range(17, 24):
-        diff1 = np.abs((data[i] - np.floor(data[i])) - int_to_float_offset)
-        diff2 = np.abs((data[i + 1] - np.floor(data[i + 1])) - int_to_float_offset)
+        if is_ascii and "Number of variables = " in line_2:
+            # This is the new version of track files with the complete header
 
-        if diff1 < abs_allowed_err and diff2 < abs_allowed_err:
-            num_columns = i
-            break
+            # Finish processing the header info
+            line_3 = track_file.readline().decode("ascii")
+            num_columns, column_schema = _binary_get_column_names_included_header(
+                line_2, line_3
+            )
+
+            # Load the binary part of the file
+            data = np.fromfile(track_file, dtype=np.float64)
+
+        else:
+            # This is the old version of track files with the incomplete header
+            track_file.seek(0)
+            _ = track_file.readline()
+
+            # Load the entire remaining file
+            data = np.fromfile(track_file, dtype=np.float64)
+
+            # Determine the number of columns and generate the schema
+            num_columns, column_schema = _estimate_num_rows(data)
 
     # Reshape to the proper shape
     num_rows = data.shape[0] // num_columns
     data = data.reshape((num_rows, num_columns))
-
-    # Get the list of column names
-    column_schema = _binary_get_column_names(num_columns)
 
     # Compute mu
     data, column_schema = _compute_magnetic_moment(data, column_schema)
