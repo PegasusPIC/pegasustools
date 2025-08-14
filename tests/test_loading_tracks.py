@@ -87,62 +87,68 @@ def test_collate_tracks_from_ascii() -> None:
 
 def test_collate_tracks_from_binary() -> None:
     """Test the collate_tracks_from_binary function."""
-    for num_columns in range(18, 24):
-        # Setup paths
-        source_directory = (
-            Path(__file__).parent.resolve() / "data" / "test_collate_tracks_from_binary"
-        )
-        parquet_directory = source_directory / "parquet"
-        source_directory.mkdir(exist_ok=True)
-        parquet_directory.mkdir(exist_ok=True)
+    for header_type in (True, False):
+        for num_columns in range(18, 24):
+            # Setup paths
+            source_directory = (
+                Path(__file__).parent.resolve()
+                / "data"
+                / "test_collate_tracks_from_binary"
+            )
+            parquet_directory = source_directory / "parquet"
+            source_directory.mkdir(exist_ok=True)
+            parquet_directory.mkdir(exist_ok=True)
 
-        # Generate test data
-        num_files = 3
-        fiducial_data = pl.concat(
-            [
-                generate_random_track_binary(
-                    source_directory / f"test_file_{i}.track_mpiio_optimized",
-                    num_columns=num_columns,
-                    seed=42 + i,
+            # Generate test data
+            num_files = 3
+            fiducial_data = pl.concat(
+                [
+                    generate_random_track_binary(
+                        source_directory / f"test_file_{i}.track_mpiio_optimized",
+                        num_columns=num_columns,
+                        seed=42 + i,
+                        new_header=header_type,
+                    )
+                    for i in range(num_files)
+                ]
+            )
+
+            # Compute global IDs
+            species_min = fiducial_data["species"].min()
+            n_species = len(fiducial_data["species"].unique())
+            n_particles = len(fiducial_data["particle_id"].unique())
+            fiducial_data = fiducial_data.with_columns(
+                particle_id=(pl.col("species") - species_min)
+                + (pl.col("particle_id") * n_species)
+                + (pl.col("block_id") * n_species * n_particles)
+            )
+            # Sort Test Data
+            fiducial_data = fiducial_data.sort(["particle_id", "time"])
+
+            # Compute delta mu
+            fiducial_data = fiducial_data.with_columns(
+                delta_mu_abs=pl.when(
+                    pl.col("particle_id") == pl.col("particle_id").shift()
                 )
-                for i in range(num_files)
-            ]
-        )
+                .then((pl.col("mu") - pl.col("mu").shift()).abs())
+                .otherwise(None)
+            )
 
-        # Compute global IDs
-        species_min = fiducial_data["species"].min()
-        n_species = len(fiducial_data["species"].unique())
-        n_particles = len(fiducial_data["particle_id"].unique())
-        fiducial_data = fiducial_data.with_columns(
-            particle_id=(pl.col("species") - species_min)
-            + (pl.col("particle_id") * n_species)
-            + (pl.col("block_id") * n_species * n_particles)
-        )
-        # Sort Test Data
-        fiducial_data = fiducial_data.sort(["particle_id", "time"])
+            # Run the code to test
+            num_procs = min(num_files, 12)
+            pt.collate_tracks_from_binary(
+                num_processes=num_procs,
+                source_dir=source_directory,
+                destination_dir=parquet_directory,
+            )
+            test_data = pl.read_parquet(parquet_directory)
 
-        # Compute delta mu
-        fiducial_data = fiducial_data.with_columns(
-            delta_mu_abs=pl.when(pl.col("particle_id") == pl.col("particle_id").shift())
-            .then((pl.col("mu") - pl.col("mu").shift()).abs())
-            .otherwise(None)
-        )
+            # Verify the results
+            polars.testing.assert_frame_equal(test_data, fiducial_data)
 
-        # Run the code to test
-        num_procs = min(num_files, 12)
-        pt.collate_tracks_from_binary(
-            num_processes=num_procs,
-            source_dir=source_directory,
-            destination_dir=parquet_directory,
-        )
-        test_data = pl.read_parquet(parquet_directory)
-
-        # Verify the results
-        polars.testing.assert_frame_equal(test_data, fiducial_data)
-
-        # Cleanup the files created
-        [f.unlink() for f in source_directory.glob("*.track_mpiio_optimized")]  # type: ignore[func-returns-value]
-        [f.unlink() for f in parquet_directory.glob("*.parquet")]  # type: ignore[func-returns-value]
+            # Cleanup the files created
+            [f.unlink() for f in source_directory.glob("*.track_mpiio_optimized")]  # type: ignore[func-returns-value]
+            [f.unlink() for f in parquet_directory.glob("*.parquet")]  # type: ignore[func-returns-value]
 
 
 def generate_random_track_ascii(
@@ -250,10 +256,12 @@ def generate_random_track_ascii(
     return track_data_df  # noqa: RET504
 
 
-def generate_random_track_binary(  # noqa: PLR0915
+def generate_random_track_binary(  # noqa: PLR0915, C901
     file_path: Path,
     num_columns: int,
     seed: int | None = None,
+    *,
+    new_header: bool = False,
 ) -> pl.DataFrame:
     """Generate a .track.dat ASCII file.
 
@@ -265,6 +273,8 @@ def generate_random_track_binary(  # noqa: PLR0915
         The number of columns to write
     seed : int | None, optional
         The seed for the PRNG, by default None
+    new_header: bool, optional
+        Whether to use the old header or the new header that includes the column names.
 
     Returns
     -------
@@ -274,12 +284,71 @@ def generate_random_track_binary(  # noqa: PLR0915
     # Setup PRNG
     rng = np.random.default_rng(seed)
 
+    # Setup column names
+    int_t = pl.datatypes.Int64
+    float_t = pl.datatypes.Float64
+    column_schema = [
+        ("particle_id", int_t),
+        ("block_id", int_t),
+        ("species", int_t),
+        ("time", float_t),
+        ("x1", float_t),
+        ("x2", float_t),
+        ("x3", float_t),
+        ("v1", float_t),
+        ("v2", float_t),
+        ("v3", float_t),
+        ("B1", float_t),
+        ("B2", float_t),
+        ("B3", float_t),
+        ("E1", float_t),
+        ("E2", float_t),
+        ("E3", float_t),
+        ("U1", float_t),
+        ("U2", float_t),
+        ("U3", float_t),
+        ("dens", float_t),
+        ("forcing1", float_t),
+        ("forcing2", float_t),
+        ("forcing3", float_t),
+        ("mu", float_t),
+    ]
+
+    match num_columns:
+        case 18:  # 1D no forcing
+            column_schema.remove(("x2", float_t))
+            column_schema.remove(("x3", float_t))
+            column_schema.remove(("forcing1", float_t))
+            column_schema.remove(("forcing2", float_t))
+            column_schema.remove(("forcing3", float_t))
+        case 19:  # 2D no forcing
+            column_schema.remove(("x3", float_t))
+            column_schema.remove(("forcing1", float_t))
+            column_schema.remove(("forcing2", float_t))
+            column_schema.remove(("forcing3", float_t))
+        case 20:  # 3D no forcing
+            column_schema.remove(("forcing1", float_t))
+            column_schema.remove(("forcing2", float_t))
+            column_schema.remove(("forcing3", float_t))
+        case 21:  # 1D with forcing
+            column_schema.remove(("x2", float_t))
+            column_schema.remove(("x3", float_t))
+        case 22:  # 2D with forcing
+            column_schema.remove(("x3", float_t))
+        case 23:  # 3D with forcing
+            pass
+
     # Open file
     with file_path.open("wb") as track_file:
         # Write header
         time = rng.uniform(0, 1000, 1)[0]
         header = f"Particle track output function at time = {time}\n"
         track_file.write(header.encode("ascii"))
+
+        if new_header:
+            column_names = "   ".join([column_schema[i][0] for i in range(num_columns)])
+            track_file.write(f"Number of variables = {num_columns}\n".encode("ascii"))
+            track_file.write(f"Variables:   {column_names}\n".encode("ascii"))
 
         # Generate random data
         length = 1000
@@ -334,57 +403,4 @@ def generate_random_track_binary(  # noqa: PLR0915
     track_data = np.hstack((track_data, mu.reshape(len(mu), 1)))
 
     # ===== Convert to dataframe =====
-    int_t = pl.datatypes.Int64
-    float_t = pl.datatypes.Float64
-    column_schema = [
-        ("particle_id", int_t),
-        ("block_id", int_t),
-        ("species", int_t),
-        ("time", float_t),
-        ("x1", float_t),
-        ("x2", float_t),
-        ("x3", float_t),
-        ("v1", float_t),
-        ("v2", float_t),
-        ("v3", float_t),
-        ("B1", float_t),
-        ("B2", float_t),
-        ("B3", float_t),
-        ("E1", float_t),
-        ("E2", float_t),
-        ("E3", float_t),
-        ("U1", float_t),
-        ("U2", float_t),
-        ("U3", float_t),
-        ("dens", float_t),
-        ("forcing1", float_t),
-        ("forcing2", float_t),
-        ("forcing3", float_t),
-        ("mu", float_t),
-    ]
-
-    match num_columns:
-        case 18:  # 1D no forcing
-            column_schema.remove(("x2", float_t))
-            column_schema.remove(("x3", float_t))
-            column_schema.remove(("forcing1", float_t))
-            column_schema.remove(("forcing2", float_t))
-            column_schema.remove(("forcing3", float_t))
-        case 19:  # 2D no forcing
-            column_schema.remove(("x3", float_t))
-            column_schema.remove(("forcing1", float_t))
-            column_schema.remove(("forcing2", float_t))
-            column_schema.remove(("forcing3", float_t))
-        case 20:  # 3D no forcing
-            column_schema.remove(("forcing1", float_t))
-            column_schema.remove(("forcing2", float_t))
-            column_schema.remove(("forcing3", float_t))
-        case 21:  # 1D with forcing
-            column_schema.remove(("x2", float_t))
-            column_schema.remove(("x3", float_t))
-        case 22:  # 2D with forcing
-            column_schema.remove(("x3", float_t))
-        case 23:  # 3D with forcing
-            pass
-
     return pl.from_numpy(track_data, schema=column_schema)
