@@ -4,6 +4,8 @@ import re
 from pathlib import Path
 
 import numpy as np
+import polars as pl
+import polars.testing
 import pytest
 
 import pegasustools as pt
@@ -18,7 +20,7 @@ def test_PegasusSpectralData_init() -> None:
 
     for header_type in (True, False):
         # Create the file
-        time, fiducial_data = generate_random_spec_file(
+        time, fiducial_data, meshblock_locations = generate_random_spec_file(
             file_path,
             seed=42,
             num_meshblocks=7,
@@ -38,6 +40,11 @@ def test_PegasusSpectralData_init() -> None:
         # Verify the spectra
         np.testing.assert_array_max_ulp(fiducial_data, test.data, maxulp=0)
 
+        # Verify the meshblock locations
+        polars.testing.assert_frame_equal(
+            meshblock_locations, test.meshblock_locations, abs_tol=0.0
+        )
+
 
 def test_PegasusSpectralData_file_wrong_shape() -> None:
     """Test pt.PegasusSpectralData if the file is the wrong shape."""
@@ -49,9 +56,7 @@ def test_PegasusSpectralData_file_wrong_shape() -> None:
     )
 
     # Create the file
-    time, fiducial_data = generate_random_spec_file(
-        file_path, seed=42, num_meshblocks=7
-    )
+    _ = generate_random_spec_file(file_path, seed=42, num_meshblocks=7)
 
     n_prp = 17
     err_msg = (
@@ -71,7 +76,7 @@ def generate_random_spec_file(
     num_perpendicular: int = 200,
     *,
     new_header: bool = False,
-) -> tuple[float, np.typing.NDArray[np.float64]]:
+) -> tuple[float, np.typing.NDArray[np.float64], pl.DataFrame]:
     """Write a .spec file with random data for testing.
 
     Parameters
@@ -127,7 +132,14 @@ def generate_random_spec_file(
 
         # trim off the header and reshape to the actual shape that the loader
         # will return
+        headers = spec_data[:, :header_size]
         spec_data = spec_data[:, header_size:]
         spec_data = spec_data.reshape((num_meshblocks, num_perpendicular, num_parallel))
 
-    return time, spec_data
+        # Create the meshblock header dataframe
+        meshblock_locations = pl.from_numpy(
+            headers,
+            schema=("x1min", "x1max", "x2min", "x2max", "x3min", "x3max"),
+        )
+
+    return time, spec_data, meshblock_locations
