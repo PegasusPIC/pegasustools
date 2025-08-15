@@ -8,6 +8,7 @@ This module provides:
 from pathlib import Path
 
 import numpy as np
+import polars as pl
 
 
 class PegasusSpectralData:
@@ -113,11 +114,22 @@ class PegasusSpectralData:
                 )
                 raise ValueError(err_msg)
 
-            # Rearrange the data into the correct shape and trim off the header elements
-            # in each block
+            # Rearrange the data into the correct shape including the header for each
+            # meshblock
             self.data = self.data.reshape((num_col, num_row))
+
+            # Slice off the header and main data
+            headers = self.data[:, :block_header_size]
             self.data = self.data[:, block_header_size:]
+
+            # Reshape data now that the headers have been removed
             self.data = self.data.reshape((num_col, self.__n_prp, self.__n_prl))
+
+            # Organize the meshblock headers into a DataFrame
+            self._meshblock_locations = pl.from_numpy(
+                headers,
+                schema=("x1min", "x1max", "x2min", "x2max", "x3min", "x3max"),
+            )
 
     # Define getters for header variables
     @property
@@ -174,3 +186,20 @@ class PegasusSpectralData:
             The value of max_w_prl
         """
         return self.__max_w_prl
+
+    @property
+    def meshblock_locations(self) -> pl.DataFrame:
+        """Get meshblock locations DataFrame.
+
+        Returns
+        -------
+        pl.DataFrame
+            The location data for each meshblock. Keys are:
+            - x1min
+            - x1max
+            - x2min
+            - x2max
+            - x3min
+            - x3max
+        """
+        return self._meshblock_locations
