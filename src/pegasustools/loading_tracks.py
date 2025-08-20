@@ -30,7 +30,39 @@ def _remove_restart_overlaps(
     return overlapped_arr[mask]
 
 
-def _ascii_track_reader(file_path: Path, particle_id_max: int) -> pl.DataFrame:
+def _get_ascii_particle_ids(path: Path) -> tuple[int, int, int]:
+    file_name = path.stem.split(".")
+
+    # Block ID
+    block_id = int(file_name[-2])
+
+    # Particle ID
+    particle_id = int(file_name[-3])
+
+    # Species IDs
+    length_with_species = 5
+    if len(file_name) == length_with_species:
+        species_id_str = file_name[-4]
+        if species_id_str == "p":
+            species_id = 0
+        elif species_id_str[0] == "m":
+            # offset by 1 account for protons having ID = 0
+            species_id = int(species_id_str[1:]) + 1
+        else:
+            msg = f"The filename {path} has an invalid species ID."
+            raise ValueError(msg)
+    elif len(file_name) == length_with_species - 1:
+        species_id = 0
+    else:
+        msg = f"The file {path} name does not match an ASCII track file."
+        raise ValueError(msg)
+
+    return species_id, particle_id, block_id
+
+
+def _ascii_track_reader(
+    file_path: Path, particle_id_max: int, species_id_min: int, species_id_max: int
+) -> pl.DataFrame:
     """Load the track data from an ascii file at file_path.
 
     Parameters
@@ -39,6 +71,10 @@ def _ascii_track_reader(file_path: Path, particle_id_max: int) -> pl.DataFrame:
         The path to the .track.dat file
     particle_id_max : int
         The maximum value of the particle ID in the entire dataset.
+    species_id_min : int
+        The minimum value of the species ID in the entire dataset.
+    species_id_max : int
+        The maximum value of the species ID in the entire dataset.
     """
     logger = setup_pt_logger()
     # ===== Load the data =====
@@ -59,10 +95,6 @@ def _ascii_track_reader(file_path: Path, particle_id_max: int) -> pl.DataFrame:
             logger.critical(
                 "The file at %s is not a Pegasus++ .track.dat file.", str(file_path)
             )
-
-        # Parse the header
-        particle_id = int(header[-3].split("=")[-1])
-        block_id = int(header[-1].split("=")[-1])
 
         # Parse column names
         column_headers = column_headers[1:]  # cut out the comment character
@@ -89,8 +121,20 @@ def _ascii_track_reader(file_path: Path, particle_id_max: int) -> pl.DataFrame:
         delta_mu_abs=(pl.col("mu") - pl.col("mu").shift()).abs()
     )
 
-    # Add in the block and particle ID columns
-    global_particle_id = particle_id + block_id * (particle_id_max + 1)
+    # Determine the various particle IDs
+    species_id, particle_id, block_id = _get_ascii_particle_ids(file_path)
+
+    # Compute the global particle ID
+    n_particles = particle_id_max + 1
+    n_species = species_id_max - species_id_min + 1
+    global_particle_id = (
+        (species_id - species_id_min)
+        + particle_id * n_species
+        + block_id * n_species * n_particles
+    )
+
+    # Add in the ID columns
+    data_df = data_df.insert_column(0, pl.lit(species_id).alias("species"))
     data_df = data_df.insert_column(0, pl.lit(block_id).alias("block_id"))
     data_df = data_df.insert_column(0, pl.lit(global_particle_id).alias("particle_id"))
 
@@ -98,11 +142,18 @@ def _ascii_track_reader(file_path: Path, particle_id_max: int) -> pl.DataFrame:
 
 
 def _ascii_tracks_to_parquet(
-    files_to_read: list[Path], output_directory: Path, particle_id_max: int
+    files_to_read: list[Path],
+    output_directory: Path,
+    particle_id_max: int,
+    species_id_min: int,
+    species_id_max: int,
 ) -> None:
     # Convert the ascii track files to parquet and get the mins & maxes for IDs
     particle_data = pl.concat(
-        [_ascii_track_reader(f, particle_id_max) for f in files_to_read]
+        [
+            _ascii_track_reader(f, particle_id_max, species_id_min, species_id_max)
+            for f in files_to_read
+        ]
     )
 
     # Write the dataframe to a parquet file.
@@ -116,7 +167,7 @@ def _ascii_tracks_to_parquet(
 
 def _process_ascii_filenames(
     source_dir: Path, num_processes: int, max_parquet_size: int
-) -> tuple[np.typing.ArrayLike, int]:
+) -> tuple[np.typing.ArrayLike, int, int, int]:
     # Setup logging
     logger = setup_pt_logger()
 
@@ -130,18 +181,29 @@ def _process_ascii_filenames(
         raise FileNotFoundError(msg)
     logger.info("Found %i .track.dat files.", len(files_to_read))
 
-    # Find the maximum particle ID
-    particle_id_max = -999
+    # Find the maximum particle ID, minimum and maximum species id
+    particle_id_max = int(-1e9)
+    species_id_max = int(-1e9)
+    species_id_min = int(1e9)
     for path in files_to_read:
-        particle_id = int(path.stem.split(".")[1])
-        particle_id_max = max(particle_id, particle_id_max)
+        # Get the IDs for this file
+        species_id, particle_id, _ = _get_ascii_particle_ids(path)
+
+        # Determine mins and maxes
+        particle_id_max = max(particle_id_max, particle_id)
+        species_id_max = max(species_id_max, species_id)
+        species_id_min = min(species_id_min, species_id)
 
     # Sort the paths based on the global particle ID
     def global_id(file_path: Path) -> int:
-        name = file_path.stem.split(".")
-        particle_id = int(name[1])
-        block_id = int(name[2])
-        return particle_id + block_id * (particle_id_max + 1)
+        species_id, particle_id, block_id = _get_ascii_particle_ids(file_path)
+        n_particles = particle_id_max + 1
+        n_species = species_id_max - species_id_min + 1
+        return (
+            (species_id - species_id_min)
+            + particle_id * n_species
+            + block_id * n_species * n_particles
+        )
 
     files_to_read = sorted(files_to_read, key=global_id)
 
@@ -163,7 +225,7 @@ def _process_ascii_filenames(
     # Split the list of files into even chunks
     file_blocks = np.array_split(np.array(files_to_read), num_chunks)
 
-    return file_blocks, particle_id_max
+    return file_blocks, particle_id_max, species_id_min, species_id_max
 
 
 def collate_tracks_from_ascii(
@@ -192,8 +254,8 @@ def collate_tracks_from_ascii(
     logger = setup_pt_logger()
 
     # Process the file names and get some basic statistics
-    file_blocks, particle_id_max = _process_ascii_filenames(
-        source_dir, num_processes, max_parquet_size
+    file_blocks, particle_id_max, species_id_min, species_id_max = (
+        _process_ascii_filenames(source_dir, num_processes, max_parquet_size)
     )
 
     # Create destination directory if it doesn't already exist
@@ -214,7 +276,12 @@ def collate_tracks_from_ascii(
         start = default_timer()
         futures = [
             executor.submit(
-                _ascii_tracks_to_parquet, f, destination_dir, particle_id_max
+                _ascii_tracks_to_parquet,
+                f,
+                destination_dir,
+                particle_id_max,
+                species_id_min,
+                species_id_max,
             )
             for f in file_blocks
         ]

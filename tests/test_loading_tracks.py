@@ -247,7 +247,9 @@ def generate_random_track_ascii(
         ("mu", float_t),
     ]
 
+    species_id = 0
     track_data_df = pl.from_numpy(track_data, schema=column_schema)
+    track_data_df = track_data_df.insert_column(0, pl.lit(species_id).alias("species"))
     track_data_df = track_data_df.insert_column(0, pl.lit(block_id).alias("block_id"))
     track_data_df = track_data_df.insert_column(
         0, pl.lit(particle_id).alias("particle_id")
