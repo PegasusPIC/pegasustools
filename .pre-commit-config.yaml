@@ -16,7 +16,7 @@ repos:
 
   # A variety of generic checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: "v5.0.0"
+    rev: "v6.0.0"
     hooks:
       - id: check-added-large-files # Check that no large files (>500kB) are being committed
       - id: check-case-conflict # Check that filenames won't have issues with case sensitive file systems
@@ -49,7 +49,7 @@ repos:
 
   # Run Ruff linter and formatter on all python files, apply and show fixes
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.12.7"
+    rev: "v0.12.9"
     hooks:
       - id: ruff
         args: ["--fix", "--show-fixes"]
@@ -73,7 +73,7 @@ repos:
 
   # Basic linting of shell files
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: "v0.10.0.1"
+    rev: "v0.11.0.1"
     hooks:
       - id: shellcheck
 
@@ -95,7 +95,7 @@ repos:
 
   # Validate other file types
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: "0.33.2"
+    rev: "0.33.3"
     hooks:
       - id: check-dependabot # Validate dependabot file
       - id: check-github-workflows # Validate GitHub Workflows files
