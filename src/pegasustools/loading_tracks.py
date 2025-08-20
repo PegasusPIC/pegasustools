@@ -114,28 +114,9 @@ def _ascii_tracks_to_parquet(
     particle_data.write_parquet(output_directory / output_name)
 
 
-def collate_tracks_from_ascii(
-    num_processes: int,
-    source_dir: Path,
-    destination_dir: Path,
-    *,
-    max_parquet_size: int = 2000,
-) -> None:
-    """Collate the .track.dat files in a directory into ordered files.
-
-    Parameters
-    ----------
-    num_processes : int
-        The number of processes to use.
-    source_dir : Path
-        The path to the directory with the .track.dat files
-    destination_dir : Path
-        The path with filename where the parquet files should be created. It will be
-        created if it doesn't exist.
-    max_parquet_size : int, optional
-        The maximum parquet file size in MB. This is only approximate and the actual
-        file size might be smaller to help with load balancing. By default 2000MB
-    """
+def _process_ascii_filenames(
+    source_dir: Path, num_processes: int, max_parquet_size: int
+) -> tuple[np.typing.ArrayLike, int]:
     # Setup logging
     logger = setup_pt_logger()
 
@@ -148,9 +129,6 @@ def collate_tracks_from_ascii(
         msg = f"No .track.dat files found in {source_dir}"
         raise FileNotFoundError(msg)
     logger.info("Found %i .track.dat files.", len(files_to_read))
-
-    # Create destination directory if it doesn't already exist
-    destination_dir.mkdir(parents=True, exist_ok=True)
 
     # Find the maximum particle ID
     particle_id_max = -999
@@ -184,6 +162,42 @@ def collate_tracks_from_ascii(
 
     # Split the list of files into even chunks
     file_blocks = np.array_split(np.array(files_to_read), num_chunks)
+
+    return file_blocks, particle_id_max
+
+
+def collate_tracks_from_ascii(
+    num_processes: int,
+    source_dir: Path,
+    destination_dir: Path,
+    *,
+    max_parquet_size: int = 2000,
+) -> None:
+    """Collate the .track.dat files in a directory into ordered files.
+
+    Parameters
+    ----------
+    num_processes : int
+        The number of processes to use.
+    source_dir : Path
+        The path to the directory with the .track.dat files
+    destination_dir : Path
+        The path with filename where the parquet files should be created. It will be
+        created if it doesn't exist.
+    max_parquet_size : int, optional
+        The maximum parquet file size in MB. This is only approximate and the actual
+        file size might be smaller to help with load balancing. By default 2000MB
+    """
+    # Setup logging
+    logger = setup_pt_logger()
+
+    # Process the file names and get some basic statistics
+    file_blocks, particle_id_max = _process_ascii_filenames(
+        source_dir, num_processes, max_parquet_size
+    )
+
+    # Create destination directory if it doesn't already exist
+    destination_dir.mkdir(parents=True, exist_ok=True)
 
     # Spawning new processes instead of forking is required for polars
     with concurrent.futures.ProcessPoolExecutor(
