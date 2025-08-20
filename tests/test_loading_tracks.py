@@ -24,11 +24,13 @@ def test_no_track_dat_found() -> None:
         )
 
 
-def test_collate_tracks_from_ascii() -> None:
+def test_collate_tracks_from_ascii_no_species() -> None:
     """Test the collate_tracks_from_binary function."""
     # Setup paths
     source_directory = (
-        Path(__file__).parent.resolve() / "data" / "test_collate_tracks_from_ascii"
+        Path(__file__).parent.resolve()
+        / "data"
+        / "test_collate_tracks_from_ascii_no_species"
     )
     parquet_directory = source_directory / "parquet"
     source_directory.mkdir(exist_ok=True)
@@ -39,16 +41,18 @@ def test_collate_tracks_from_ascii() -> None:
     block_id_max = 4
     num_files = particle_id_max * block_id_max
     unconcat_fid_data = []
+    counter = 0
     for particle_id in range(particle_id_max):
         for block_id in range(block_id_max):
-            unconcat_fid_data.append(  # noqa: PERF401
+            unconcat_fid_data.append(
                 generate_random_track_ascii(
                     source_directory,
                     particle_id,
                     block_id,
-                    seed=42 + particle_id + block_id * particle_id_max,
+                    seed=42 + counter,
                 )
             )
+            counter += 1
 
     fiducial_data = pl.concat(unconcat_fid_data)
 
@@ -57,6 +61,82 @@ def test_collate_tracks_from_ascii() -> None:
     fiducial_data = fiducial_data.with_columns(
         particle_id=(pl.col("particle_id") + (pl.col("block_id") * (n_particles)))
     )
+    # Sort Test Data
+    fiducial_data = fiducial_data.sort(["particle_id", "time"])
+
+    # Compute delta mu
+    fiducial_data = fiducial_data.with_columns(
+        delta_mu_abs=pl.when(pl.col("particle_id") == pl.col("particle_id").shift())
+        .then((pl.col("mu") - pl.col("mu").shift()).abs())
+        .otherwise(None)
+    )
+
+    # Run the code to test
+    num_procs = min(num_files, 12)
+    pt.collate_tracks_from_ascii(
+        num_processes=num_procs,
+        source_dir=source_directory,
+        destination_dir=parquet_directory,
+    )
+    test_data = pl.read_parquet(parquet_directory).sort(["particle_id", "time"])
+
+    # Verify the results. Note the high relative error tolerance to account for lost
+    # precision going to/from ASCII
+    polars.testing.assert_frame_equal(test_data, fiducial_data, rel_tol=1.85e-02)
+
+    # Cleanup the files created
+    [f.unlink() for f in source_directory.glob("*.track.dat")]  # type: ignore[func-returns-value]
+    [f.unlink() for f in parquet_directory.glob("*.parquet")]  # type: ignore[func-returns-value]
+
+
+def test_collate_tracks_from_ascii_with_species() -> None:
+    """Test the collate_tracks_from_binary function."""
+    # Setup paths
+    source_directory = (
+        Path(__file__).parent.resolve()
+        / "data"
+        / "test_collate_tracks_from_ascii_with_species"
+    )
+    parquet_directory = source_directory / "parquet"
+    source_directory.mkdir(exist_ok=True)
+    parquet_directory.mkdir(exist_ok=True)
+
+    # Generate test data1
+    particle_id_max = 4
+    block_id_max = 4
+    species_ids = ["p", "m00", "m01", "m02"]
+    num_files = particle_id_max * block_id_max
+    unconcat_fid_data = []
+    counter = 0
+    for species_id in species_ids:
+        for particle_id in range(particle_id_max):
+            for block_id in range(block_id_max):
+                unconcat_fid_data.append(
+                    generate_random_track_ascii(
+                        source_directory,
+                        particle_id,
+                        block_id,
+                        species_id=species_id,
+                        seed=42 + counter,
+                    )
+                )
+                counter += 1
+
+    fiducial_data = pl.concat(unconcat_fid_data)
+
+    # Compute global IDs
+    n_particles = len(fiducial_data["particle_id"].unique())
+    species_min = fiducial_data["species"].min()
+    species_max = fiducial_data["species"].max()
+    n_species = species_max - species_min + 1
+    fiducial_data = fiducial_data.with_columns(
+        particle_id=(
+            (pl.col("species") - species_min)
+            + pl.col("particle_id") * n_species
+            + pl.col("block_id") * n_species * n_particles
+        )
+    )
+
     # Sort Test Data
     fiducial_data = fiducial_data.sort(["particle_id", "time"])
 
@@ -152,7 +232,11 @@ def test_collate_tracks_from_binary() -> None:
 
 
 def generate_random_track_ascii(
-    target_dir_path: Path, particle_id: int, block_id: int, seed: int | None = None
+    target_dir_path: Path,
+    particle_id: int,
+    block_id: int,
+    species_id: str | None = None,
+    seed: int | None = None,
 ) -> pl.DataFrame:
     """Generate a .track.dat ASCII file.
 
@@ -164,6 +248,8 @@ def generate_random_track_ascii(
         The particle ID
     block_id : int
         The block ID
+    species_id : str, optional
+        The species id, defaults to None
     seed : int | None, optional
         The seed for the PRNG, by default None
 
@@ -181,8 +267,19 @@ def generate_random_track_ascii(
         "# [1]=time     [2]=x1       [3]=x2       [4]=v1       [5]=v2       [6]=v3       [7]=B1       [8]=B2       [9]=B3       [10]=E1       [11]=E2       [12]=E3       [13]=U1       [14]=U2       [15]=U3       [16]=dens\n"  # noqa: E501
     )
 
+    # Figure out the species ID
+    species_moniker = "" if species_id is None else f".{species_id}"
+    if species_id in [None, "p"]:
+        species_id_int = 0
+    else:
+        assert isinstance(species_id, str)
+        species_id_int = int(species_id[1:]) + 1
+
     # Open file
-    file_path = target_dir_path / f"test_file.0{particle_id}.0000{block_id}.track.dat"
+    file_path = (
+        target_dir_path
+        / f"test_file{species_moniker}.0{particle_id}.0000{block_id}.track.dat"
+    )
     with file_path.open("w") as track_file:
         # Write header
         track_file.write(header)
@@ -248,6 +345,9 @@ def generate_random_track_ascii(
     ]
 
     track_data_df = pl.from_numpy(track_data, schema=column_schema)
+    track_data_df = track_data_df.insert_column(
+        0, pl.lit(species_id_int).alias("species")
+    )
     track_data_df = track_data_df.insert_column(0, pl.lit(block_id).alias("block_id"))
     track_data_df = track_data_df.insert_column(
         0, pl.lit(particle_id).alias("particle_id")
