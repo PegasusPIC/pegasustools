@@ -7,6 +7,7 @@ PegasusTools: Analysis package for the Pegasus PIC code.
 from pegasustools.loading_hst import load_hst_file
 from pegasustools.loading_nbf import PegasusNBFData
 from pegasustools.loading_spectra import PegasusSpectralData
+from pegasustools.loading_traces import collate_traces
 from pegasustools.loading_tracks import (
     collate_tracks_from_ascii,
     collate_tracks_from_binary,
@@ -22,6 +23,7 @@ __all__ = [
     "PegasusNBFData",
     "PegasusSpectralData",
     "__version__",
+    "collate_traces",
     "collate_tracks_from_ascii",
     "collate_tracks_from_binary",
     "load_hst_file",
