@@ -68,6 +68,58 @@ def test_PegasusSpectralData_file_wrong_shape() -> None:
         _ = pt.PegasusSpectralData(file_path, n_prp=n_prp)
 
 
+def test_PegasusSpectralData_reduce_spectra() -> None:
+    """Test pt.PegasusSpectralData.reduce_spectra method."""
+    # Setup path
+    file_path = (
+        Path(__file__).parent.resolve() / "data" / "test_PegasusSpectralData.spec"
+    )
+
+    # Create the file
+    time, fiducial_data, _ = generate_random_spec_file(
+        file_path, seed=42, num_meshblocks=7
+    )
+
+    # Load test data
+    test = pt.PegasusSpectralData(file_path)
+
+    # Reduce the spectra
+    test.reduce_spectra()
+
+    # Compute the fiducial version
+    n_prp = 200
+    n_prl = 400
+    max_w_prp = 4.0
+    max_w_prl = 4.0
+    v_prp_max = 4.0
+
+    summed_spectra = fiducial_data.sum(axis=0)
+
+    # v_prl array goes from [-vprlmax to vprlmax]
+    dv_prl = 2.0 * max_w_prl / n_prl
+    # v_prp array goes from [0 to vprpmax]
+    dv_prp = max_w_prp / n_prp
+    norm = summed_spectra.sum() * dv_prl * dv_prp
+
+    # normalized, averaged f(wprl,wprp) such that int(f(wprl,wprp) dwprl dwprp) = 1
+    # Note: this is not the correct normalization for edotv outputs (edotv should be
+    # normalized relative to f, not itself)
+    data_avg = summed_spectra / norm
+    half_bin = (v_prp_max / n_prp) / 2
+    v_prp = np.linspace(0 + half_bin, v_prp_max + half_bin, n_prp)
+
+    spectra_prl = data_avg.sum(axis=0) * dv_prp
+    spectra_prp = 0.5 * (data_avg.sum(axis=1) / v_prp) * dv_prl
+
+    # Verify the results
+    assert test.spectra_prp.shape == (200,)
+    assert test.spectra_prl.shape == (400,)
+    np.testing.assert_array_max_ulp(spectra_prp, test.spectra_prp, maxulp=0)
+    np.testing.assert_array_max_ulp(spectra_prl, test.spectra_prl, maxulp=0)
+
+    assert test.v_prp_max == v_prp_max
+
+
 def generate_random_spec_file(
     file_path: Path,
     num_meshblocks: int,
