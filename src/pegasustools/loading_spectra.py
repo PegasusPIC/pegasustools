@@ -60,7 +60,6 @@ class PegasusSpectralData:
         self.__n_prl: int = n_prl
         self.__max_w_prp: float = max_w_prp
         self.__max_w_prl: float = max_w_prl
-        self.__v_prp_max: float | None = None
         self.spectra_prp: np.typing.NDArray[np.float64]
         self.spectra_prl: np.typing.NDArray[np.float64]
 
@@ -189,17 +188,6 @@ class PegasusSpectralData:
         return self.__max_w_prl
 
     @property
-    def v_prp_max(self) -> float | None:
-        """Get v_prp_max.
-
-        Returns
-        -------
-        int | None
-            The value of v_prp_max
-        """
-        return self.__v_prp_max
-
-    @property
     def meshblock_locations(self) -> pl.DataFrame:
         """Get meshblock locations DataFrame.
 
@@ -216,32 +204,27 @@ class PegasusSpectralData:
         """
         return self._meshblock_locations
 
-    def reduce_spectra(self, v_prp_max: float = 4.0) -> None:
+    def reduce_spectra(self) -> None:
         """Reduce the spectra.
-
-        v_prp_max : float, optional
-            The value of vprpmax used in the peginput file, by default 4.0
 
         Creates two new member variables, spectra_prl and spectra_prp, with
         the parallel and perpendicular averaged spectrum. Depends on `max_w_prp`,
-        `max_w_prl`, `n_prp`, `n_prl`, and `v_prp_max` being set correctly.
+        `max_w_prl`, `n_prp`, and `n_prl` being set correctly.
         """
-        self.__v_prp_max = v_prp_max
-
         summed_spectra = self.data.sum(axis=0)
 
         # v_prl array goes from [-vprlmax to vprlmax]
         dv_prl = 2.0 * self.__max_w_prl / self.__n_prl
-        # v_prp array goes from [0 to vprpmax]
-        dv_prp = self.__max_w_prp / self.__n_prp
-        norm = summed_spectra.sum() * dv_prl * dv_prp
+        # w_prp array goes from [0 to vprpmax]
+        dw_prp = self.__max_w_prp / self.__n_prp
+        norm = summed_spectra.sum() * dv_prl * dw_prp
 
         # normalized, averaged f(wprl,wprp) such that int(f(wprl,wprp) dwprl dwprp) = 1
         # Note: this is not the correct normalization for edotv outputs (edotv should be
         # normalized relative to f, not itself)
         data_avg = summed_spectra / norm
-        half_bin = (self.__v_prp_max / self.__n_prp) / 2
-        v_prp = np.linspace(0 + half_bin, self.__v_prp_max + half_bin, self.__n_prp)
+        half_bin = (self.__max_w_prp / self.__n_prp) / 2
+        w_prp = np.linspace(0 + half_bin, self.__max_w_prp + half_bin, self.__n_prp)
 
-        self.spectra_prl = data_avg.sum(axis=0) * dv_prp
-        self.spectra_prp = 0.5 * (data_avg.sum(axis=1) / v_prp) * dv_prl
+        self.spectra_prl = data_avg.sum(axis=0) * dw_prp
+        self.spectra_prp = 0.5 * (data_avg.sum(axis=1) / w_prp) * dv_prl
