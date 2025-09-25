@@ -68,13 +68,6 @@ build.hooks.vcs.version-file = "src/pegasustools/_version.py"
 features = ["test"]
 scripts.test = "pytest {args}"
 
-
-[tool.uv]
-dev-dependencies = [
-  "pegasustools[test]",
-]
-
-
 [tool.pytest.ini_options]
 minversion = "8.0"
 addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config", "--cov=pegasustools", "--cov-branch", "--cov-report=term-missing"]
