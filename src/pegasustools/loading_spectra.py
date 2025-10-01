@@ -66,6 +66,12 @@ class PegasusSpectralData:
         self.spectra_prp: np.typing.NDArray[np.float64]
         self.spectra_prl: np.typing.NDArray[np.float64]
 
+        # Determine header size
+        if file_path.suffixes[-1] == ".spec":
+            self.__block_header_size = 6  # The header of each block is 6 elements
+        else:
+            self.__block_header_size = 0
+
         # Open the file
         with file_path.open(mode="rb") as spec_file:
             # Load the header
@@ -106,6 +112,9 @@ class PegasusSpectralData:
         # Get the number of ion species if it's there
         if "Number of minor-ion species =" in header[0]:
             self.__num_ions = int(header.pop(0).split()[-1])
+            # The file only includes the number of *minor* ions. Add one to increase to
+            # the total number of ions
+            self.__num_ions += 1
 
         # Select path based on the number of ions
         if self.__num_ions == 1:
@@ -114,7 +123,7 @@ class PegasusSpectralData:
             self.__n_prp = int(header.pop(0).split()[-1])
             self.__max_w_prl = float(header.pop(0).split()[-1])
             self.__max_w_prp = float(header.pop(0).split()[-1])
-        else:
+        elif self.__num_ions > 1:
             # This is a new header with multiple ions
             # Loop through the header to read the data for each ion
             n_prl, n_prp, max_w_prl, max_w_prp = [], [], [], []
@@ -130,14 +139,19 @@ class PegasusSpectralData:
             self.__n_prp = tuple(n_prp)
             self.__max_w_prl = tuple(max_w_prl)
             self.__max_w_prp = tuple(max_w_prp)
+        else:
+            msg = (
+                f"The total number of ions is: {self.__num_ions}, it must be a "
+                "positive integer."
+            )
+            raise ValueError(msg)
 
     def __reshape_single_ion(self, file_path: Path) -> None:
         assert isinstance(self.__n_prl, int)  # noqa: S101
         assert isinstance(self.__n_prp, int)  # noqa: S101
 
         # Get the info to reshape the array
-        block_header_size = 6  # The header of each block is 6 elements
-        num_row = self.__n_prl * self.__n_prp + block_header_size
+        num_row = self.__n_prl * self.__n_prp + self.__block_header_size
         num_col = self.data.size // num_row
 
         # Check that the file is actually the right size for the number of elements
@@ -156,20 +170,51 @@ class PegasusSpectralData:
         self.data = self.data.reshape((num_col, num_row))
 
         # Slice off the header and main data
-        headers = self.data[:, :block_header_size]
-        self.data = self.data[:, block_header_size:]
+        headers = self.data[:, : self.__block_header_size]
+        self.data = self.data[:, self.__block_header_size :]
 
         # Reshape data now that the headers have been removed
-        self.data = self.data.reshape((num_col, self.__n_prp, self.__n_prl))
+        self.data = self.data.reshape((num_col, self.__n_prp, self.__n_prl)).squeeze()
 
         # Organize the meshblock headers into a DataFrame
-        self._meshblock_locations = pl.from_numpy(
-            headers,
-            schema=("x1min", "x1max", "x2min", "x2max", "x3min", "x3max"),
-        )
+        if self.__block_header_size > 0:
+            self._meshblock_locations = pl.from_numpy(
+                headers,
+                schema=("x1min", "x1max", "x2min", "x2max", "x3min", "x3max"),
+            )
 
     def __reshape_multiple_ion(self, file_path: Path) -> None:
-        pass
+        assert isinstance(self.__n_prl, tuple)  # noqa: S101
+        assert isinstance(self.__n_prp, tuple)  # noqa: S101
+
+        # Get the info to reshape the array
+        num_row = self.__block_header_size
+        for i in range(self.__num_ions):
+            num_row += self.__n_prl[i] * self.__n_prp[i]
+
+        # Check that the file is actually the right size for the number of elements
+        # per spectra. Note that this check isn't perfect, it just verifies that the
+        # file can be exactly divided by the number of elements provided.
+        if self.data.size % num_row != 0:
+            err_msg = (
+                f"The file {file_path} does not have the right number of "
+                f"elements for the values of {self.__n_prl = } and "
+                f"{self.__n_prp = } provided."
+            )
+            raise ValueError(err_msg)
+
+        # Reshape data now that the headers have been removed
+        data_list = []
+        start_slice = 0
+        for i in range(self.__num_ions):
+            ion_arr_size = self.__n_prl[i] * self.__n_prp[i]
+            data_list.append(
+                self.data[start_slice : start_slice + ion_arr_size].reshape(
+                    self.__n_prp[i], self.__n_prl[i]
+                )
+            )
+            start_slice += ion_arr_size
+        self.data = tuple(data_list)
 
     # Define getters for header variables
     @property
@@ -262,6 +307,12 @@ class PegasusSpectralData:
         the parallel and perpendicular averaged spectrum. Depends on `max_w_prp`,
         `max_w_prl`, `n_prp`, and `n_prl` being set correctly.
         """
+        # Type narrow to the .spec file case
+        assert isinstance(self.__n_prl, int)  # noqa: S101
+        assert isinstance(self.__n_prp, int)  # noqa: S101
+        assert isinstance(self.__max_w_prl, float)  # noqa: S101
+        assert isinstance(self.__max_w_prp, float)  # noqa: S101
+
         summed_spectra = self.data.sum(axis=0)
 
         # v_prl array goes from [-vprlmax to vprlmax]
