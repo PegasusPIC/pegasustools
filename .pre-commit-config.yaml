@@ -4,7 +4,9 @@ ci:
   autofix_commit_msg: "style: pre-commit fixes"
   autoupdate_schedule: "monthly"
 
-exclude: ^.cruft.json|.copier-answers.yml$|old_scripts/.*|.vscode/.*
+exclude: ^.cruft.json|.copier-answers.yml$|old_scripts/.*|.vscode/.*|docs/example_data/.*
+
+# |*.nbf|*.specav|*.hst
 
 repos:
   # Format code in documentation files and comments
