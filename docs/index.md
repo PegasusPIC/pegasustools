@@ -5,7 +5,10 @@
 :hidden:
 :caption: Documentation
 
-reading_pegasus_files.ipynb
+reading_nbf_files.ipynb
+reading_spectra_files.ipynb
+reading_track_files.ipynb
+reading_hst_files.ipynb
 plotting.ipynb
 api/pegasustools
 ```
