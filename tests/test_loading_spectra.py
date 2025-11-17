@@ -76,7 +76,7 @@ def test_PegasusSpectralData_reduce_spectra() -> None:
     )
 
     # Create the file
-    time, fiducial_data, _ = generate_random_spec_file(
+    _, fiducial_data, _ = generate_random_spec_file(
         file_path, seed=42, num_meshblocks=7
     )
 
