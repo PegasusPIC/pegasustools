@@ -1,4 +1,9 @@
+#!/usr/bin/env -S uv run --script
 """Noxfile to define sessions that the Nox task runner can execute."""
+
+# /// script
+# dependencies = ["nox"]
+# ///
 
 import argparse
 import shutil
@@ -9,11 +14,10 @@ import nox
 DIR = Path(__file__).parent.resolve()
 
 nox.needs_version = ">=2024.3.2"
-nox.options.sessions = ["lint", "pylint", "tests"]
 nox.options.default_venv_backend = "uv|virtualenv"
 
 
-@nox.session
+@nox.session(reuse_venv=True, default=True)
 def lint(session: nox.Session) -> None:
     """Run the linter."""
     session.install("pre-commit")
@@ -22,7 +26,7 @@ def lint(session: nox.Session) -> None:
     )
 
 
-@nox.session
+@nox.session(reuse_venv=True, default=True)
 def pylint(session: nox.Session) -> None:
     """Run PyLint."""
     # This needs to be installed into the package environment, and is slower
@@ -31,7 +35,7 @@ def pylint(session: nox.Session) -> None:
     session.run("pylint", "pegasustools", *session.posargs)
 
 
-@nox.session
+@nox.session(reuse_venv=True, default=True)
 def tests(session: nox.Session) -> None:
     """Run the unit and regular tests."""
     session.install("-e.[test]")
@@ -45,7 +49,7 @@ def tests(session: nox.Session) -> None:
     )
 
 
-@nox.session(reuse_venv=True)
+@nox.session(reuse_venv=True, default=False)
 def docs(session: nox.Session) -> None:
     """Build the docs.
 
@@ -77,7 +81,7 @@ def docs(session: nox.Session) -> None:
         session.run("sphinx-build", "--keep-going", *shared_args)
 
 
-@nox.session
+@nox.session(reuse_venv=True, default=False)
 def build_api_docs(session: nox.Session) -> None:
     """Build (regenerate) API docs."""
     session.install("sphinx")
@@ -95,7 +99,7 @@ def build_api_docs(session: nox.Session) -> None:
     )
 
 
-@nox.session
+@nox.session(reuse_venv=True, default=False)
 def build(session: nox.Session) -> None:
     """Build an SDist and wheel."""
     build_path = DIR.joinpath("build")
@@ -104,3 +108,7 @@ def build(session: nox.Session) -> None:
 
     session.install("build")
     session.run("python", "-m", "build")
+
+
+if __name__ == "__main__":
+    nox.main()

@@ -30,7 +30,7 @@ dynamic = ["version"]
 dependencies = [
     "numpy>=2.2",
     "matplotlib>=3.10",
-    "polars-u64-idx[numpy]>=1.29",
+    "polars[rt64,numpy]>=1.29",
 ]
 
 [project.optional-dependencies]

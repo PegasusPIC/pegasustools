@@ -28,11 +28,11 @@ jobs:
         with:
           python-version: "3.13"
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
       - name: Run PyLint
         run: uvx nox -s pylint -- --output-format=github
       - name: Run sp-repo-review
-        run: pipx run sp-repo-review[cli]
+        run: pipx run sp-repo-review[cli] --ignore PP006
 
   checks:
     name: "Tests: Python-${{ matrix.python-version }} on ${{ matrix.runs-on }}"
