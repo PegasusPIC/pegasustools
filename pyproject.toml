@@ -33,7 +33,7 @@ dependencies = [
     "polars-u64-idx[numpy]>=1.29",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 test = [
   "pytest>=8",
   "pytest-cov>=6",
