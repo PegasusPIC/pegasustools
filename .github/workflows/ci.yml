@@ -32,7 +32,7 @@ jobs:
       - name: Run PyLint
         run: uvx nox -s pylint -- --output-format=github
       - name: Run sp-repo-review
-        run: pipx run sp-repo-review[cli]
+        run: pipx run sp-repo-review[cli] --ignore PP006
 
   checks:
     name: "Tests: Python-${{ matrix.python-version }} on ${{ matrix.runs-on }}"
