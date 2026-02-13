@@ -17,8 +17,9 @@
         "edotv",
         "nprp",
         "vprpmax",
-        "vprlmax",,
+        "vprlmax",
         "unconcat",
-        "xcolor"
+        "xcolor",
+        "specav"
     ]
 }

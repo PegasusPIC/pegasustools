@@ -119,6 +119,34 @@ def test_PegasusSpectralData_reduce_spectra() -> None:
     assert test.max_w_prp == max_w_prp
 
 
+def test_PegasusSpectralData_specav() -> None:
+    """Test that pt.PegasusSpectralData can open specav files with multiple species."""
+    # Setup path
+    file_path = Path(__file__).parent.resolve() / "data" / "test_specav.specav"
+
+    # Load the file
+    specav_data = pt.PegasusSpectralData(file_path)
+
+    # Verify results
+    assert specav_data.num_ions == 3
+    assert specav_data.time == 0.0
+
+    assert isinstance(specav_data.n_prl, list)
+    assert isinstance(specav_data.n_prp, list)
+    assert isinstance(specav_data.max_w_prl, list)
+    assert isinstance(specav_data.max_w_prp, list)
+    assert isinstance(specav_data.data, list)
+
+    max_w_prl_fiducial = (5.477226, 2.738613, 5.477226)
+    max_w_prp_fiducial = (5.477226, 2.738613, 5.477226)
+    for i in range(specav_data.num_ions):
+        assert specav_data.n_prl[i] == 400
+        assert specav_data.n_prp[i] == 200
+        assert specav_data.max_w_prl[i] == max_w_prl_fiducial[i]
+        assert specav_data.max_w_prp[i] == max_w_prp_fiducial[i]
+        assert specav_data.data[i].shape == (200, 400)
+
+
 def generate_random_spec_file(
     file_path: Path,
     num_meshblocks: int,
