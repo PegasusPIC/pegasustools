@@ -47,13 +47,13 @@ jobs:
         with:
           python-version: "3.13"
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: Packages
           path: dist
 
       - name: Generate artifact attestation for sdist and wheel
-        uses: actions/attest-build-provenance@v3.2.0
+        uses: actions/attest-build-provenance@v4.1.0
         with:
           subject-path: "dist/*"
 
@@ -85,13 +85,13 @@ jobs:
         with:
           python-version: "3.13"
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: Packages
           path: dist
 
       - name: Generate artifact attestation for sdist and wheel
-        uses: actions/attest-build-provenance@v3.2.0
+        uses: actions/attest-build-provenance@v4.1.0
         with:
           subject-path: "dist/*"
 
