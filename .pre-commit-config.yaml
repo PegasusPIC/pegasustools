@@ -41,7 +41,7 @@ repos:
 
   # Format the file types listed in `types_or` are formatted with Prettier
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "v3.8.1"
+    rev: "v3.9.6"
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
@@ -49,7 +49,7 @@ repos:
 
   # Run Ruff linter and formatter on all python files, apply and show fixes
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.15.0"
+    rev: "v0.16.6"
     hooks:
       - id: ruff-check
         args: ["--fix", "--show-fixes"]
@@ -57,7 +57,7 @@ repos:
 
   # Run Mypy for type checking
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.19.1"
+    rev: "v2.3.1"
     hooks:
       - id: mypy
         files: src|tests
@@ -67,13 +67,13 @@ repos:
 
   # Spellchecking
   - repo: https://github.com/codespell-project/codespell
-    rev: "v2.4.1"
+    rev: "v2.4.3"
     hooks:
       - id: codespell
 
   # Basic linting of shell files
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: "v0.11.0.1"
+    rev: "v0.11.0.1-1"
     hooks:
       - id: shellcheck
 
@@ -88,14 +88,14 @@ repos:
 
   # Validate pyproject.toml file
   - repo: https://github.com/abravalheri/validate-pyproject
-    rev: "v0.25"
+    rev: "0.26"
     hooks:
       - id: validate-pyproject
         additional_dependencies: ["validate-pyproject-schema-store[all]"]
 
   # Validate other file types
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: "0.36.1"
+    rev: "0.38.0"
     hooks:
       - id: check-dependabot # Validate dependabot file
       - id: check-github-workflows # Validate GitHub Workflows files
@@ -103,6 +103,6 @@ repos:
 
   # Strip output from notebooks
   - repo: https://github.com/kynan/nbstripout
-    rev: 0.9.0
+    rev: 0.9.1
     hooks:
       - id: nbstripout
